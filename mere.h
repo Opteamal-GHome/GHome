@@ -12,6 +12,8 @@ enum logLvl{
   DEBUG
 };
 
+void * startSensorServer(void *);
+
 int sendLog(enum logLvl level, char * format,...);
 //This function allows a thread to ask for a information to be logged
 //in a printf-like style. The 'level' argument is used to describe the 

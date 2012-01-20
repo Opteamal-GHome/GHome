@@ -1,4 +1,5 @@
-//Initializer/logger/destructor
+//Initializer/logger/destructor in the ghome server which still has no name.
+//Author(s) : Raphael C.
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -110,7 +111,6 @@ void handler(int sigNb){
   }
   //ask for application termination
   //test sendLog :
-  sendLog(DEBUG,"Coucou lol %d, lolilol %s",15,"pouet");
   if (msgsnd(msgLog, (void *)&msg, 0, IPC_NOWAIT)==-1) {
     logErr(WARNING,"msgsnd failed in handler",errno);
   }
@@ -118,13 +118,12 @@ void handler(int sigNb){
 int main(int argc, char * argv[]) {
   //init 
   char buff[MSG_SIZE];
-  //tcp server use :
-//  int socketClient=0;
-//  int socketServer=0;
-//  int ret=0;
-  //message box use :
+  int ret=0;
+  //message box control :
   int stop=0;
   int msgSize;
+  //threads control :
+  pthread_t sst; //sensorServerThread
 
   struct mlog received;
   struct sigaction act = {
@@ -147,12 +146,18 @@ int main(int argc, char * argv[]) {
   //set up signals handlers :
   sigaction(SIGINT,&act,NULL);
   sigaction(SIGKILL,&act,NULL);
+
   //create log mailox :
 	msgLog = msgget ( IPC_PRIVATE , ACCES | IPC_CREAT );
   if (msgLog==-1) {
     logErr(ERROR,"msgget",errno);
    return -1;
   }
+
+  //create various threads : 
+  pthread_create(&sst,NULL,startSensorServer,NULL);
+  //Start the thread with the defaults arguments, using the startSensorServer 
+  //function as entry point, with no arguments to this function.
 
   snprintf(buff,MSG_SIZE,"Message box created with id : %d",msgLog);
   logMsg(DEBUG,buff);
@@ -173,7 +178,7 @@ int main(int argc, char * argv[]) {
         stop=STOP;
         break;
       case ERR :
-        logErr(received.mtext.errnb, received.mtext.data,\
+        logErr(received.mtext.level, received.mtext.data,\
             received.mtext.errnb);
         break;
       case INFO :
@@ -183,19 +188,21 @@ int main(int argc, char * argv[]) {
   }
   //Exit
   logMsg(LOG,"Exiting application");
+  logMsg(DEBUG,"Canceling sst thread");
+  ret=pthread_cancel(sst);
+  if(ret==-1){
+    logErr(WARNING,"Canceling failed",errno);
+  } else {
+    logMsg(DEBUG,"Joining sst thread");
+    ret=pthread_join(sst,NULL);
+    if(ret==-1){
+      logErr(WARNING,"joining failed",errno);
+    }
+  }
   logMsg(DEBUG,"Removing message queue");
 	if(msgctl ( msgLog, IPC_RMID, 0 )){
     logErr(ERROR,"msgctl",errno);
   }
-/*
-  socketServer=initServer();  
-  for (;;) {
-    socketClient=waitClient(socketServer);
-    for (; ret!=-1;){
-      ret = receive(socketClient);
-    }
-    logMsg(LOG,"Client deconected");
-  }*/
   logMsg(DEBUG,"Closing file descriptors");
   fclose(logFile);
   return 0;

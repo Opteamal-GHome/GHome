@@ -1,4 +1,5 @@
-
+//Module containing basic operations allowing to use a tcp server
+//Author(s) : Rapahel C.
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
@@ -9,8 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "mere.h"
 
-#define listen_port 80
 #define SERVER_STOP 42
 #define forward_address "127.0.0.1"
 #define forward_port 1337
@@ -54,11 +55,11 @@ int clientIni(FILE * output)
 	//We probably don't need that
 	socketd = socket(AF_INET, SOCK_STREAM, 0);
 	if(socketd == -1) {
-		perror("socket "); //fail to create new socket
+		sendErr(ERROR,"socket ",errno); //fail to create new socket
 		return -1;
 	}
 	if (setsockopt(socketd,SOL_SOCKET,SO_REUSEADDR,&opt,4)) {
-		perror("setsockopt ");
+		sendErr(WARNING,"setsockopt ",errno);
 		return -1;
 	}
 	
@@ -66,19 +67,19 @@ int clientIni(FILE * output)
 	server_address.sin_family = AF_INET; //ipv4
 
 	if (inet_pton(AF_INET,forward_address,&server_address.sin_addr) == -1) {
-		perror("inet_pton ");
+		sendErr(WARNING,"inet_pton ",errno);
 		return -1;
 	}
 	server_address.sin_port = port; 
 	if (connect(socketd,(const struct sockaddr *)&server_address,sizeof(server_address))) {
-		perror("connect ");
+		sendErr(ERROR,"connect ",errno);
 		return -1;
 	}
 	printf("Client Initialized\n");
 	return socketd;
 
 }
-int initServer(){
+int initServer(listen_port){
 
 	int listen_socketd;
 	uint16_t port;
@@ -86,15 +87,14 @@ int initServer(){
 	int options = 1;
 
 	port = htons(listen_port);
-	printf("Server initializing\n");
 	listen_socketd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(listen_socketd == -1) {
-		perror("socket creation ");
-		return errno; //fail to create new socket
+		sendErr(ERROR,"socket creation ",errno);
+		return -1; //fail to create new socket
 	}
 	if (setsockopt(listen_socketd,SOL_SOCKET,SO_REUSEADDR,&options,4)) {
-		perror("setsockopt ");
+		sendErr(WARNING,"setsockopt ",errno);
 	}
 	memset(&own_address,0,sizeof(struct sockaddr_in)); //clear struct
 	own_address.sin_family = AF_INET; //ipv4
@@ -103,19 +103,17 @@ int initServer(){
 
 	if (bind(listen_socketd, (struct sockaddr *) &own_address, sizeof(own_address)) < 0) {
 		//fail to name socket;
-		perror("bind ");
+		sendErr(ERROR,"bind ",errno);
 		return errno;
 	}
-	printf("Server Initialized\n");
 
 	if (listen(listen_socketd,1) < 0)
 	{
-		perror("listen ");
+		sendErr(ERROR,"listen ",errno);
 		return errno;
 	}
-	printf("Server listenning on port %d\n",ntohs(port));
+	sendLog(DEBUG,"Server listenning on port %d",ntohs(port));
   return listen_socketd;
-
 }
 
 int waitClient(int listenSocket){
@@ -129,38 +127,32 @@ int waitClient(int listenSocket){
     (struct sockaddr *) &client_address, &client_size);
   if (request_socketd == -1)
   {
-    perror("accept ");
+    sendErr(ERROR,"accept ",errno);
     return errno;	
   }
-  printf("new connection\n"); 
-  printf("\tremote address : %s\n", inet_ntoa(client_address.sin_addr));
-  printf("\tremote port : %d\n", ntohs(client_address.sin_port));
+  sendLog(DEBUG,"new connection"); 
+  sendLog(DEBUG,"\tremote address : %s", inet_ntoa(client_address.sin_addr));
+  sendLog(DEBUG,"\tremote port : %d", ntohs(client_address.sin_port));
 
 	return request_socketd;
 }
 
 void closeClient(int clientSock){
 
+  sendLog(DEBUG,"Client deconected");
   shutdown(clientSock, SHUT_RDWR);
 	close(clientSock);
 }
-int receive(int socket){
+int receive(int socket, void * buff, int sizeMax){
   size_t ret = 0;
-  int i=0;
-  char buff[150];
-  ret+=recv(socket,(void*)buff,150,0);
+  ret+=recv(socket,(void*)buff,sizeMax,0);
   if (ret==0){
     closeClient(socket);
     return -1;
   }else if(ret==-1){
-    perror("recv ");
+    sendErr(DEBUG,"recv on socket failed",errno);
   }else{
-    buff[ret]='\0';
-    printf("Received %d bytes.\n",ret);
-    for (i=0; i<ret; i++) {
-      printf("%d ",buff[i]);
-    }
-    printf("\n");
+    sendLog(DEBUG,"Received %d bytes.",ret);
   }
   return ret;
 }
@@ -168,7 +160,7 @@ int receive(int socket){
 void transmit(int socket, char * buff, int size){
   if (send(socket, buff, size,0)==-1)
   {
-    perror("send :"); 
+    sendErr(DEBUG,"send on socket failed",errno); 
   }
 
 }
