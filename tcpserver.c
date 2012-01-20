@@ -146,6 +146,7 @@ void closeClient(int clientSock){
 }
 int receive(int socket){
   size_t ret = 0;
+  int i=0;
   char buff[150];
   ret+=recv(socket,(void*)buff,150,0);
   if (ret==0){
@@ -155,7 +156,11 @@ int receive(int socket){
     perror("recv ");
   }else{
     buff[ret]='\0';
-    printf("%s",buff);
+    printf("Received %d bytes.\n",ret);
+    for (i=0; i<ret; i++) {
+      printf("%d ",buff[i]);
+    }
+    printf("\n");
   }
   return ret;
 }

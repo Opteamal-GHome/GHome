@@ -1,1 +1,4 @@
-Serveur C
+## Serveur C
+ - Ecoute sur le port 80
+ - Log les message dans le fichier ghome.log et sur l'ecran
+
