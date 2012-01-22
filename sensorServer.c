@@ -4,6 +4,7 @@
 #include "tcpserver.h"
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define listen_port 80
 struct frame {
@@ -16,7 +17,16 @@ void * startSensorServer(void * args){
   int socketClient=0;
   int socketServer=0;
   struct frame received;
+  sigset_t set;
 
+  sigemptyset(&set);
+  sigaddset(&set, SIGTERM);
+  sigaddset(&set, SIGINT);
+  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+  pthread_sigmask(SIG_BLOCK,&set,NULL);
+  //Those calls allow to uninstall the termination handler in this thread,
+  //it is however a rather inelegant way to do it,
+  //there must be some other way to achieve this.
   sendLog(DEBUG,"sensorServer started");
   socketServer=initServer(listen_port);
   if (socketServer==-1) {
