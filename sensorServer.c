@@ -19,10 +19,16 @@ void * startSensorServer(void * args){
 
   sendLog(DEBUG,"sensorServer started");
   socketServer=initServer(listen_port);
-  sendLog(DEBUG,"sensorServer initialized");
+  if (socketServer==-1) {
+    return NULL;
+  }
+  sendLog(DEBUG,"sensorServer initialized, socket descriptor : %d",socketServer);
   for (;;) {
     sendLog(DEBUG,"sensorServer waiting for a client");
     socketClient=waitClient(socketServer);
+    if (socketClient==-1) {
+      return NULL;
+    }
     for (ret=0; ret!=-1;){
       //Each frame is cut in 3 pieces, timestamp, type and data
       //The first two pieces have a fixed size of 5 bytes, let's get those.

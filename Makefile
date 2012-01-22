@@ -6,7 +6,7 @@ EDLFLAGS=-Wall -m32
 EXE=ghome #Nom du binaire à construire
 
 OBJ=tcpserver.o mere.o sensorServer.o
-LIBS=-lpthread
+LIBS=-lpthread -lrt
 
 
 $(EXE): $(OBJ)

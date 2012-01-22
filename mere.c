@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <sys/msg.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <mqueue.h>
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
@@ -17,9 +17,11 @@
 #define LOG_SIZE 150
 #define ERR_SIZE 30
 #define MSG_SIZE 140
+#define MQ_LOG_NAME "/mqLog"
 static FILE * logFile=NULL;
 static int verbose=0;
 
+pthread_t sst; //sensorServerThread
 struct msgData{
   int errnb;
   enum logLvl level;
@@ -30,8 +32,7 @@ struct mlog{
   long mtype; //can be 0 for message or 1 for control
   struct msgData mtext;
 };
-
-static int msgLog; 
+static mqd_t msgLog; 
 
 int sendLog(enum logLvl level, char * format,...) {
   struct mlog msg = {
@@ -42,7 +43,7 @@ int sendLog(enum logLvl level, char * format,...) {
   va_list args;
   va_start(args,format);
   vsprintf(msg.mtext.data,format,args);
-  if (msgsnd(msgLog,(void *)&msg, MSG_SIZE,0)==-1) {
+  if (mq_send(msgLog,(void *)&msg, sizeof(struct mlog),0)==-1) {
     perror("sendLog");
     va_end(args);
     return -1;
@@ -58,8 +59,8 @@ int sendErr(enum logLvl level, char * info, int errnb) {
     .mtext.level=level,
   };
   memcpy(msg.mtext.data,info,strlen(info));
-  if (msgsnd(msgLog,(void *)&msg, MSG_SIZE,0)==-1) {
-    perror("sendLog");
+  if (mq_send(msgLog,(void *)&msg, sizeof(struct mlog),1)==-1) {
+    perror("[ERROR] sendLog");
     return -1;
   }
   return 0;
@@ -98,9 +99,8 @@ static int logErr(enum logLvl level, char * log, int err) {
 }
 void handler(int sigNb){
   //We've been asked to terminate  
-  struct mlog msg = {
-    .mtype=1,
-  };
+  int ret = 0;
+  printf("\n"); //this one is purely to avoid having the ^C polluting our output
   switch (sigNb){
     case SIGINT:
       logMsg(LOG,"Received Ctrl-C, quiting GHome server");
@@ -111,19 +111,38 @@ void handler(int sigNb){
   }
   //ask for application termination
   //test sendLog :
-  if (msgsnd(msgLog, (void *)&msg, 0, IPC_NOWAIT)==-1) {
-    logErr(WARNING,"msgsnd failed in handler",errno);
+  logMsg(LOG,"Exiting application");
+  logMsg(DEBUG,"Canceling sst thread");
+  ret=pthread_cancel(sst);
+  if(ret==-1){
+    logErr(WARNING,"Canceling failed",errno);
+  } else {
+    logMsg(DEBUG,"Joining sst thread");
+    ret=pthread_join(sst,NULL);
+    if(ret==-1){
+      logErr(WARNING,"joining failed",errno);
+    }
+  }
+  logMsg(DEBUG,"Removing message queue");
+  if(mq_close(msgLog)){
+    logErr(WARNING,"mq_close",errno);
+  }
+  if(mq_unlink(MQ_LOG_NAME)){
+    logErr(DEBUG,"mq_unlink",errno);
   }
 }
 int main(int argc, char * argv[]) {
   //init 
   char buff[MSG_SIZE];
-  int ret=0;
   //message box control :
   int stop=0;
-  int msgSize;
+  size_t msgSize;
+  mode_t mqMode= S_IRWXO; //Allows everything for everyone
+  struct mq_attr attrs = {
+    .mq_maxmsg=10, //beyond 10 msgs one might need root acces
+    .mq_msgsize=200,
+  };
   //threads control :
-  pthread_t sst; //sensorServerThread
 
   struct mlog received;
   struct sigaction act = {
@@ -145,32 +164,42 @@ int main(int argc, char * argv[]) {
   logMsg(LOG,"Log file created");
   //set up signals handlers :
   sigaction(SIGINT,&act,NULL);
-  sigaction(SIGKILL,&act,NULL);
+  sigaction(SIGTERM,&act,NULL);
 
-  //create log mailox :
-	msgLog = msgget ( IPC_PRIVATE , ACCES | IPC_CREAT );
-  if (msgLog==-1) {
-    logErr(ERROR,"msgget",errno);
-   return -1;
+  //create log mailbox :
+	if(mq_unlink(MQ_LOG_NAME)){
+    logErr(DEBUG,"mq_unlink",errno);
   }
+	msgLog = mq_open( MQ_LOG_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
+      mqMode, &attrs);
+  if (msgLog==-1) {
+    logErr(ERROR,"mq_open",errno);
+    return -1;
+  }
+  snprintf(buff,MSG_SIZE,"Message box created with fd : %d",msgLog);
+  logMsg(DEBUG,buff);
 
   //create various threads : 
   pthread_create(&sst,NULL,startSensorServer,NULL);
   //Start the thread with the defaults arguments, using the startSensorServer 
   //function as entry point, with no arguments to this function.
 
-  snprintf(buff,MSG_SIZE,"Message box created with id : %d",msgLog);
-  logMsg(DEBUG,buff);
   //Wait for messages to log :
-  for (stop=0; stop!=1;) {
-    msgSize=msgrcv(msgLog, (void*)&received, MSG_SIZE, 0, MSG_NOERROR);
+  received.mtype=INFO;
+  received.mtext.level=DEBUG;
+  memcpy(received.mtext.data,"message received",18);
+  if (mq_send(msgLog, (void *)&received, sizeof(struct mlog),0)==-1) {
+    logErr(WARNING,"mq_send failed",errno);
+  }
+  for (stop=0; stop!=STOP;) {
+    msgSize=mq_receive(msgLog, (void*)&received, 210, NULL);
     if (msgSize==-1) {
-      logErr(DEBUG,"msgrcv",errno);
+      logErr(DEBUG,"mq_receive",errno);
       if (errno==EINTR) {
         continue; //we were interupted because a signal was caught
       } else {
-        handler(0); 
         stop=STOP;
+        continue;
       }
     }
     switch (received.mtype) {
@@ -184,25 +213,13 @@ int main(int argc, char * argv[]) {
       case INFO :
         logMsg(received.mtext.level, received.mtext.data);
         break;
+      default :
+        logMsg(WARNING,"Received unexpected message");
     }
   }
   //Exit
-  logMsg(LOG,"Exiting application");
-  logMsg(DEBUG,"Canceling sst thread");
-  ret=pthread_cancel(sst);
-  if(ret==-1){
-    logErr(WARNING,"Canceling failed",errno);
-  } else {
-    logMsg(DEBUG,"Joining sst thread");
-    ret=pthread_join(sst,NULL);
-    if(ret==-1){
-      logErr(WARNING,"joining failed",errno);
-    }
-  }
-  logMsg(DEBUG,"Removing message queue");
-	if(msgctl ( msgLog, IPC_RMID, 0 )){
-    logErr(ERROR,"msgctl",errno);
-  }
+  
+
   logMsg(DEBUG,"Closing file descriptors");
   fclose(logFile);
   return 0;

@@ -104,13 +104,13 @@ int initServer(listen_port){
 	if (bind(listen_socketd, (struct sockaddr *) &own_address, sizeof(own_address)) < 0) {
 		//fail to name socket;
 		sendErr(ERROR,"bind ",errno);
-		return errno;
+		return -1;
 	}
 
 	if (listen(listen_socketd,1) < 0)
 	{
 		sendErr(ERROR,"listen ",errno);
-		return errno;
+		return -1;
 	}
 	sendLog(DEBUG,"Server listenning on port %d",ntohs(port));
   return listen_socketd;
@@ -128,7 +128,7 @@ int waitClient(int listenSocket){
   if (request_socketd == -1)
   {
     sendErr(ERROR,"accept ",errno);
-    return errno;	
+    return -1;	
   }
   sendLog(DEBUG,"new connection"); 
   sendLog(DEBUG,"\tremote address : %s", inet_ntoa(client_address.sin_addr));
