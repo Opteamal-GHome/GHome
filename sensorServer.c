@@ -7,14 +7,39 @@
 #include <signal.h>
 
 #define listen_port 80
+
 struct frame {
   unsigned int timestamp;
   char type;
   char * data;
 };
+struct sData {
+  char infoType;
+  int sensorId;
+  char sensorType;
+};
+struct oData {
+  int sensorId;
+  int data; 
+};
+static int socketClient=0;
+
+static void getSData(){
+  struct sData received;
+  receive(socketClient, (void *)&received, 6);
+  sendLog(DEBUG,"info type : '%c', sensor ID : %d, sensor type : '%c'",\
+      received.infoType, received.sensorId, received.sensorType);
+} 
+
+static void getOData(){
+  struct oData received;
+  receive(socketClient, (void *)&received, 8);
+  sendLog(DEBUG,"sensor ID : %d, sensor value : %d",\
+      received.sensorId, received.data);
+}
+
 void * startSensorServer(void * args){
   int ret;
-  int socketClient=0;
   int socketServer=0;
   struct frame received;
   sigset_t set;
@@ -27,6 +52,7 @@ void * startSensorServer(void * args){
   //Those calls allow to uninstall the termination handler in this thread,
   //it is however a rather inelegant way to do it,
   //there must be some other way to achieve this.
+
   sendLog(DEBUG,"sensorServer started");
   socketServer=initServer(listen_port);
   if (socketServer==-1) {
@@ -47,9 +73,11 @@ void * startSensorServer(void * args){
           received.timestamp, received.type);
       switch (received.type) {
         case 'S' :
+          getSData();
           break;
         case 'D' :
         case 'O' :
+          getOData();
           break;
         default :
           sendLog(WARNING,"Unexpected frame type : %c",received.type);
