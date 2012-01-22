@@ -143,16 +143,21 @@ void closeClient(int clientSock){
   shutdown(clientSock, SHUT_RDWR);
 	close(clientSock);
 }
-int receive(int socket, void * buff, int sizeMax){
+int receive(int socket, void * buff, int bytesNb){
   size_t ret = 0;
-  ret+=recv(socket,(void*)buff,sizeMax,0);
-  if (ret==0){
-    closeClient(socket);
-    return -1;
-  }else if(ret==-1){
-    sendErr(DEBUG,"recv on socket failed",errno);
-  }else{
-    sendLog(DEBUG,"Received %d bytes.",ret);
+  size_t bytesRcv = 0;
+  for (bytesRcv=0; bytesRcv<bytesNb; ){
+    ret=recv(socket,(void*)(buff+bytesRcv),bytesNb-ret,0);
+    bytesRcv+=ret;
+    if (ret==0){
+      closeClient(socket);
+      return -1;
+    }else if(ret==-1){
+      sendErr(DEBUG,"recv on socket failed",errno);
+      return -1;
+    }else{
+      sendLog(DEBUG,"Received %d bytes.",ret);
+    }
   }
   return ret;
 }

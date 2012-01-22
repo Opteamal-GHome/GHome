@@ -35,6 +35,16 @@ void * startSensorServer(void * args){
       ret = receive(socketClient, (void*)&received ,5);
       sendLog(DEBUG,"Received new frame,\n\ttimestamp : %d,\n\ttype : '%c',",\
           received.timestamp, received.type);
+      switch (received.type) {
+        case 'S' :
+          break;
+        case 'D' :
+        case 'O' :
+          break;
+        default :
+          sendLog(WARNING,"Unexpected frame type : %c",received.type);
+
+      }
     }
     sendLog(LOG,"Client deconected");
   }

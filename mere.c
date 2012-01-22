@@ -180,7 +180,10 @@ int main(int argc, char * argv[]) {
   logMsg(DEBUG,buff);
 
   //create various threads : 
-  pthread_create(&sst,NULL,startSensorServer,NULL);
+  if (pthread_create(&sst,NULL,startSensorServer,NULL)!=0){
+    logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
+    handler(0);
+  }
   //Start the thread with the defaults arguments, using the startSensorServer 
   //function as entry point, with no arguments to this function.
 
@@ -218,11 +221,9 @@ int main(int argc, char * argv[]) {
     }
   }
   //Exit
-  
-
-  logMsg(DEBUG,"Closing file descriptors");
   fclose(logFile);
-  return 0;
+  logMsg(DEBUG,"Closing file descriptors");
+  exit(0);
 }
 
 
