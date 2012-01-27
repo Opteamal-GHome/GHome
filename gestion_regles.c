@@ -17,7 +17,6 @@ int checkRule(json_t * rule);
 int checkCondition(json_t * condition);
 int updateActuator(int id);
 int doActions(json_t * action);
-enum REQUEST_TYPE getRequestType(const char * type);
 
 void initMainRules(json_t * initSource) {
 
@@ -219,6 +218,8 @@ int checkRuleCoherence(json_t * rule) {
 				return FALSE;
 			}
 		}
+	}else{
+		//Pas d'actions!!!
 	}
 
 	return TRUE;
