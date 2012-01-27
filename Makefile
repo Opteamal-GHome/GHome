@@ -5,7 +5,8 @@ CCFLAGS=-Wall -m32 #Options de compilations
 EDLFLAGS=-Wall -m32
 EXE=ghome #Nom du binaire à construire
 
-OBJ=tcpserver.o mere.o sensorServer.o gestion_capteurs.o gestion_regles.o
+OBJ=tcpserver.o mere.o sensorServer.o gestion_capteurs.o gestion_regles.o dispatchServer.o\
+		restRcv.o
 LIBS=-lpthread -lrt -ljansson
 
 

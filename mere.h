@@ -15,13 +15,6 @@ enum logLvl{
   DEBUG
 };
 
-struct DEVICE {
-  unsigned int timestamp;
-  char type;
-  int sensorId;
-  int value;
-};
-
 struct DEVICE devices [MAX_DEV];
 
 void * startSensorServer(void *);
