@@ -87,6 +87,7 @@ int initServer(listen_port){
 	int options = 1;
 
 	port = htons(listen_port);
+  sendLog(DEBUG,"AF_INET : %d, SOCK_STREAM %d",AF_INET,SOCK_STREAM);
 	listen_socketd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(listen_socketd == -1) {
