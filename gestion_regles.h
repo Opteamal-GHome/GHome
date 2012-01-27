@@ -4,6 +4,9 @@
  *  Created on: 23 janv. 2012
  *      Author: mica
  */
+#ifndef GESTION_REGLES_H_
+#define GESTION_REGLES_H_
+
 #include <string.h>
 #include <jansson.h>
 #include <stdio.h>
@@ -11,17 +14,16 @@
 #include "gestion_capteurs.h"
 #include "mere.h"
 
-#ifndef GESTION_REGLES_H_
-#define GESTION_REGLES_H_
-
-
 #define TRUE 0
 #define FALSE -1
-#define DEBUG
 
 
 enum OPERATION_TYPE {
 	UNKNOWN, SUP, INF, EQU, SUP_DATE, INF_DATE, EQU_DATE
+};
+
+enum REQUEST_TYPE {
+	NEW_RULE,UNKNOWN_REQUEST
 };
 
 json_t *root;
@@ -46,7 +48,6 @@ int checkMainRulesCoherence();
  */
 int addRule(json_t *regle, int position);
 
-
 void addRules (json_t * rules,int positionDepart);
 /*
  * Ajout les regles a partir de position dans les regles internes si elles sont valides (capteur existants et nom inutilisé)
@@ -70,6 +71,7 @@ int removeRuleByIndex(size_t index);
  */
 void checkRules();
 
-
+json_t * convertToJson(char * string);
 
 #endif /* GESTION_REGLES_H_ */
+
