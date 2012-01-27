@@ -17,6 +17,7 @@ int checkRule(json_t * rule);
 int checkCondition(json_t * condition);
 int updateActuator(int id);
 int doActions(json_t * action);
+enum REQUEST_TYPE getRequestType(const char * type);
 
 void initMainRules(json_t * initSource) {
 
@@ -53,6 +54,19 @@ int addRule(json_t * rule, int position) {
 	return added;
 }
 
+json_t * convertToJson(char * string) {
+	json_t * jsonString;
+	json_error_t error;
+	jsonString = json_loads(string, 0, &error);
+
+	if (!jsonString) {
+		fprintf(stderr, "error: on line %d: %s\nBonus position:%d\nSource:%s",
+				error.line, error.text, error.position, error.source);
+		return (json_t *)FALSE;
+	}
+	return jsonString;
+}
+
 int removeRuleByName(char * name) {
 	json_t *rule;
 
@@ -84,10 +98,8 @@ int checkMainRulesCoherence() {
 		json_t *rule = json_array_get(root, i);
 
 		if (checkRuleCoherence(rule) == FALSE) {
-#ifdef DEBUG
 			printf("Rule: %s removed\n",
 					json_string_value(json_object_get(rule, "ruleName")));
-#endif
 			removeRuleByIndex(i);
 		}
 	}
@@ -148,11 +160,9 @@ int checkRuleCoherence(json_t * rule) {
 								if (getMemDevice(atoi(idCaptor))
 										== (struct DEVICE *) -1) {
 									//sendLog(WARNING, "Rule Incoherence: sensor:%s inexistant",idCaptor);
-#ifdef DEBUG
 									printf(
 											"Rule Incoherence: sensor:%s inexistant\n",
 											idCaptor);
-#endif
 									return FALSE;
 								}
 							}
@@ -161,9 +171,7 @@ int checkRuleCoherence(json_t * rule) {
 					} else {
 						//Operande manquante
 						//sendLog(WARNING, "Rule Incoherence: operande missing");
-#ifdef DEBUG
 						printf("Rule Incoherence: operande missing\n");
-#endif
 						return FALSE;
 					}
 
@@ -176,9 +184,7 @@ int checkRuleCoherence(json_t * rule) {
 					if (date == NULL) {
 						//Operande manquante
 						//sendLog(WARNING, "Rule Incoherence: date missing");
-#ifdef DEBUG
 						printf("Rule Incoherence: date missing\n");
-#endif
 						return FALSE;
 					}
 					break;
@@ -192,9 +198,7 @@ int checkRuleCoherence(json_t * rule) {
 			} else {
 				//Aucune condition
 				//sendLog(WARNING, "Rule Incoherence: condition missing");
-#ifdef DEBUG
 				printf("Rule Incoherence: condition missing\n");
-#endif
 				return FALSE;
 			}
 
@@ -278,17 +282,17 @@ int checkCondition(json_t * condition) {
 		}
 		switch (getOperator(type)) {
 		case SUP:
-			if(values[0] > values[1]){
+			if (values[0] > values[1]) {
 				return TRUE;
 			}
 			break;
 		case INF:
-			if(values[0] < values[1]){
+			if (values[0] < values[1]) {
 				return TRUE;
 			}
 			break;
 		case EQU:
-			if(values[0] == values[1]){
+			if (values[0] == values[1]) {
 				return TRUE;
 			}
 			break;
@@ -310,22 +314,22 @@ int checkCondition(json_t * condition) {
 		heureActuelle = localtime(&t);
 		switch (getOperator(type)) {
 		case INF_DATE:
-			if((heure > heureActuelle->tm_hour)
+			if ((heure > heureActuelle->tm_hour)
 					|| ((heure == heureActuelle->tm_hour)
-							&& (minute > heureActuelle->tm_min))){
+							&& (minute > heureActuelle->tm_min))) {
 				return TRUE;
 			}
 			break;
 		case SUP_DATE:
-			if((heure < heureActuelle->tm_hour)
+			if ((heure < heureActuelle->tm_hour)
 					|| ((heure == heureActuelle->tm_hour)
-							&& (minute < heureActuelle->tm_min))){
+							&& (minute < heureActuelle->tm_min))) {
 				return TRUE;
 			}
 			break;
 		case EQU_DATE:
-			if((heure == heureActuelle->tm_hour)
-					&& (heure == heureActuelle->tm_hour)){
+			if ((heure == heureActuelle->tm_hour)
+					&& (heure == heureActuelle->tm_hour)) {
 				return TRUE;
 			}
 			break;
@@ -346,9 +350,9 @@ int doActions(json_t * action) {
 	json_t * actuator = json_object_get(action, "actuator");
 	json_t * value = json_object_get(action, "value");
 
-
-	if(updateActuator(atoi(json_string_value(actuator))) == TRUE){
-		setValue(atoi(json_string_value(actuator)), (int) atoi(json_string_value(value)));
+	if (updateActuator(atoi(json_string_value(actuator))) == TRUE) {
+		setValue(atoi(json_string_value(actuator)),
+				(int) atoi(json_string_value(value)));
 		return TRUE;
 	}
 	return FALSE;
@@ -370,10 +374,8 @@ int checkRule(json_t * rule) {
 		json_t *action = json_array_get(actions, j);
 		if (doActions(action) != FALSE) {
 			//Si la demande de l'action a été effectuée
-			printf(
-					"Regle mise à jour %s\n",
-					json_string_value(
-							json_object_get(rule, "ruleName")));
+			printf("Regle mise à jour %s\n",
+					json_string_value(json_object_get(rule, "ruleName")));
 		}
 	}
 	return TRUE;
@@ -399,4 +401,5 @@ int updateActuator(int id) {
 	lastIndexUpdated++;
 	return TRUE;
 }
+
 
