@@ -18,10 +18,12 @@
 #define ERR_SIZE 30
 #define MSG_SIZE 140
 #define MQ_LOG_NAME "/mqLog"
+#define MQ_DISPATCH_NAME "/mqDis"
 static FILE * logFile=NULL;
 static int verbose=0;
 
 pthread_t sst; //sensorServerThread
+pthread_t dst; //dispatchServerThread
 struct msgData{
   int errnb;
   enum logLvl level;
@@ -33,6 +35,9 @@ struct mlog{
   struct msgData mtext;
 };
 static mqd_t msgLog; 
+static mqd_t dispatchReq; 
+
+struct DEVICE devices[MAX_DEV]; //memory preallocated for sensors control
 
 int sendLog(enum logLvl level, char * format,...) {
   struct mlog msg = {
@@ -138,9 +143,9 @@ int main(int argc, char * argv[]) {
   int stop=0;
   size_t msgSize;
   mode_t mqMode= S_IRWXO; //Allows everything for everyone
+  //TODO : change the mode to user.
   struct mq_attr attrs = {
     .mq_maxmsg=10, //beyond 10 msgs one might need root acces
-    .mq_msgsize=200,
   };
   //threads control :
 
@@ -170,6 +175,8 @@ int main(int argc, char * argv[]) {
 	if(mq_unlink(MQ_LOG_NAME)){
     logErr(DEBUG,"mq_unlink",errno);
   }
+  
+  attrs.mq_msgsize=200,
 	msgLog = mq_open( MQ_LOG_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
       mqMode, &attrs);
   if (msgLog==-1) {
@@ -179,6 +186,14 @@ int main(int argc, char * argv[]) {
   snprintf(buff,MSG_SIZE,"Message box created with fd : %d",msgLog);
   logMsg(DEBUG,buff);
 
+  //Create a message queue to receive dispatch request :
+	dispatchReq = mq_open( MQ_DISPATCH_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
+      mqMode, &attrs);
+  if (msgLog==-1) {
+    logErr(ERROR,"mq_open",errno);
+    return -1;
+  }
+
   //create various threads : 
   if (pthread_create(&sst,NULL,startSensorServer,NULL)!=0){
     logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
@@ -186,6 +201,10 @@ int main(int argc, char * argv[]) {
   }
   //Start the thread with the defaults arguments, using the startSensorServer 
   //function as entry point, with no arguments to this function.
+  if (pthread_create(&dst,NULL,startDispatchServer,NULL)!=0){
+    logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
+    handler(0);
+  }
 
   //Wait for messages to log :
   received.mtype=INFO;

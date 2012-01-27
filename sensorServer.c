@@ -22,6 +22,7 @@ struct oData {
   int sensorId;
   int data; 
 };
+
 static int socketClient=0;
 
 static void getSData(){

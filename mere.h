@@ -4,6 +4,7 @@
 #define STOP 1
 #define ERR 2
 #define INFO 3
+#define MAX_DEV 40
 
 enum logLvl{
   LOG,
@@ -12,7 +13,17 @@ enum logLvl{
   DEBUG
 };
 
+struct DEVICE {
+  unsigned int timestamp;
+  char type;
+  int sensorId;
+  int value;
+};
+
+struct DEVICE devices [MAX_DEV];
+
 void * startSensorServer(void *);
+void * startDispatchServer(void * args);
 
 int sendLog(enum logLvl level, char * format,...);
 //This function allows a thread to ask for a information to be logged
