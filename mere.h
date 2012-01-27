@@ -10,13 +10,19 @@
 #define REST 1
 #define SENSORS 2
 
+int socketSensorClient;
+int socketRestClient;
 enum logLvl{
   LOG,
   WARNING,
   ERROR,
   DEBUG
 };
-
+struct netMsg {
+  int dest; //Can be either REST or SENSORS
+  int msgSize;
+  char * data;
+};
 int sendNetMsg(int destination, int len, char * msg);
 
 void * startSensorServer(void *); //Implemented in sensorServer.c

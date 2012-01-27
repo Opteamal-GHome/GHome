@@ -23,18 +23,16 @@ struct oData {
   int data; 
 };
 
-static int socketClient=0;
-
 static void getSData(){
   struct sData received;
-  receive(socketClient, (void *)&received, 6);
+  receive(socketSensorClient, (void *)&received, 6);
   sendLog(DEBUG,"info type : '%c', sensor ID : %d, sensor type : '%c'",\
       received.infoType, received.sensorId, received.sensorType);
 } 
 
 static void getOData(){
   struct oData received;
-  receive(socketClient, (void *)&received, 8);
+  receive(socketSensorClient, (void *)&received, 8);
   sendLog(DEBUG,"sensor ID : %d, sensor value : %d",\
       received.sensorId, received.data);
 }
@@ -55,6 +53,7 @@ void * startSensorServer(void * args){
   //there must be some other way to achieve this.
 
   sendLog(DEBUG,"sensorServer started");
+  socketSensorClient=0;
   socketServer=initServer(listen_port);
   if (socketServer==-1) {
     return NULL;
@@ -62,14 +61,14 @@ void * startSensorServer(void * args){
   sendLog(DEBUG,"sensorServer initialized, socket descriptor : %d",socketServer);
   for (;;) {
     sendLog(DEBUG,"sensorServer waiting for a client");
-    socketClient=waitClient(socketServer);
-    if (socketClient==-1) {
+    socketSensorClient=waitClient(socketServer);
+    if (socketSensorClient==-1) {
       return NULL;
     }
     for (ret=0; ret!=-1;){
       //Each frame is cut in 3 pieces, timestamp, type and data
       //The first two pieces have a fixed size of 5 bytes, let's get those.
-      ret = receive(socketClient, (void*)&received ,5);
+      ret = receive(socketSensorClient, (void*)&received ,5);
       sendLog(DEBUG,"Received new frame,\n\ttimestamp : %d,\n\ttype : '%c',",\
           received.timestamp, received.type);
       switch (received.type) {

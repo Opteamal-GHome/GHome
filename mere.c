@@ -185,7 +185,7 @@ int main(int argc, char * argv[]) {
     logErr(DEBUG,"mq_unlink dispatch",errno);
   }
   
-  attrs.mq_msgsize=200,
+  attrs.mq_msgsize=200;
 	msgLog = mq_open( MQ_LOG_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
       mqMode, &attrs);
   if (msgLog==-1) {
@@ -195,6 +195,7 @@ int main(int argc, char * argv[]) {
   snprintf(buff,MSG_SIZE,"Message box created with fd : %d",msgLog);
   logMsg(DEBUG,buff);
 
+  attrs.mq_msgsize=sizeof(struct netMsg);
   //Create a message queue to receive dispatch request :
 	dispatchReq = mq_open( MQ_DISPATCH_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
       mqMode, &attrs);
@@ -208,13 +209,13 @@ int main(int argc, char * argv[]) {
     logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
     handler(0);
   }
+  //Start the thread with the defaults arguments, using the startSensorServer 
+  //function as entry point, with no arguments to this function.
   if (pthread_create(&sst,NULL,startSensorServer,NULL)!=0){
     logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
     handler(0);
   }
-  //Start the thread with the defaults arguments, using the startSensorServer 
-  //function as entry point, with no arguments to this function.
-
+  //TODO : wait for both servers to have a client.
   if (pthread_create(&rrt,NULL,startRestRcv,NULL)!=0){
     logErr(ERROR,"pthread_create failed for rest receive thread", errno);
     handler(0);
@@ -223,7 +224,7 @@ int main(int argc, char * argv[]) {
   //Wait for messages to log :
   received.mtype=INFO;
   received.mtext.level=DEBUG;
-  memcpy(received.mtext.data,"message received",18);
+  memcpy(received.mtext.data,"test message received",18);
   if (mq_send(msgLog, (void *)&received, sizeof(struct mlog),0)==-1) {
     logErr(WARNING,"mq_send failed",errno);
   }

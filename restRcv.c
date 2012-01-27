@@ -9,7 +9,6 @@
 
 #define listen_port 447
 #define MAX_MSG_LENGTH 200
-static int socketClient = 0;
 
 enum REQUEST_TYPE getRequestType(const char * type);
 int requestTreatment(char *requestRule);
@@ -29,6 +28,7 @@ void * startRestRcv(void * args) {
 	//it is however a rather inelegant way to do it,
 	//there must be some other way to achieve this.
 
+  socketRestClient=0;
 	sendLog(DEBUG, "rest messages reception started");
 	socketServer = initServer(listen_port);
 	if (socketServer == -1) {
@@ -36,22 +36,22 @@ void * startRestRcv(void * args) {
 	}
 	sendLog(DEBUG, "restServer initialized, socket descriptor : %d",
 			socketServer);
-	socketClient = waitClient(socketServer);
-	if (socketClient == -1) {
+	socketRestClient = waitClient(socketServer);
+	if (socketRestClient == -1) {
 		sendErr(WARNING, "sensorServer, wait failed", errno);
 		return NULL;
 	}
 	sendLog(DEBUG, "restServer client client connected");
 
 	while (1) {
-		receive(socketClient, (void*) &sizeRequest, 6);
+		receive(socketRestClient, (void*) &sizeRequest, 6);
 		sendLog(DEBUG, "restServer resquest size: %lld", sizeRequest);
 
 		if (sizeRequest < MAX_MSG_LENGTH) {
 			//Message correct
 			received = malloc(sizeRequest + 1);
 			received[sizeRequest + 1] = '\0';
-			receive(socketClient, (void*) &received, sizeRequest);
+			receive(socketRestClient, (void*) &received, sizeRequest);
 
 			if (requestTreatment(received) == TRUE) {
 				sendLog(DEBUG, "Request done");

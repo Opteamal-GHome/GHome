@@ -8,11 +8,7 @@
 #include <mqueue.h>
 #include <errno.h>
 
-struct netMsg {
-  int dest; //Can be either REST or SENSORS
-  int msgSize;
-  char * data;
-};
+
 static mqd_t dispatchReq;
 int sendNetMsg(int destination, int len, char * msg){
   struct netMsg newMsg={
@@ -55,9 +51,9 @@ void * startDispatchServer(void * args) {
   //get the message queue id :
   dispatchReq=*(mqd_t*)args;
   for (stop=0; stop!=STOP;) {
-    msgSize=mq_receive(dispatchReq, (void*)&received, sizeof(received), NULL);
+    msgSize=mq_receive(dispatchReq, (void*)&received, sizeof(struct netMsg), NULL);
     if (msgSize==-1) {
-      sendErr(DEBUG,"mq_receive",errno);
+      sendErr(DEBUG,"dispatch mq_receive",errno);
       if (errno==EINTR) {
         continue; //we were interupted because a siqnal was caught
       } else {
