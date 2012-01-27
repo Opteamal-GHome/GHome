@@ -7,7 +7,7 @@
 #include "tcpserver.h"
 #include "gestion_regles.h"
 
-#define listen_port 447
+#define listen_port 443
 #define MAX_MSG_LENGTH 200
 static int socketClient = 0;
 
@@ -70,26 +70,31 @@ int requestTreatment(char *requestRule) {
 	int priority;
 	json_t * rule;
 	json_t * requestJson = convertToJson(requestRule);
-	const char * type = json_string_value(
-			json_object_get(requestJson, "msgType"));
-	switch (getRequestType(type)) {
-	case NEW_RULE:
-		priority = atoi(
-				json_string_value(json_object_get(requestJson, "priority")));
-		rule = json_object_get(requestJson, "rule");
-		int bool = addRule(rule, priority);
-		if (bool == TRUE) {
-			sendLog(DEBUG, "Rule added");
-			saveRules("afterRequestTreatment.json");
-			return TRUE;
-		} else {
-			sendLog(DEBUG, "Rule not added (not coherent)");
-		}
-		break;
-	default:
-		break;
+	if ((int)requestJson != FALSE){
+		const char * type = json_string_value(
+				json_object_get(requestJson, "msgType"));
+		switch (getRequestType(type)) {
+		case NEW_RULE:
+			priority = atoi(
+					json_string_value(json_object_get(requestJson, "priority")));
+			rule = json_object_get(requestJson, "rule");
+			int bool = addRule(rule, priority);
+			if (bool == TRUE) {
+				sendLog(DEBUG, "Rule added");
+				saveRules("afterRequestTreatment.json");
+				return TRUE;
+			} else {
+				sendLog(DEBUG, "Rule not added (not coherent)");
+			}
+			break;
+		default:
+			break;
 
+		}
+	}else{
+		sendLog(DEBUG, "Request not formated correctly");
 	}
+
 	return FALSE;
 }
 
