@@ -1,0 +1,43 @@
+[
+   {
+      "ruleName": "nomRegleInit1",
+      "conditions": [
+         {
+            "type": "inf",
+            "leftOp": "1",
+            "rightOp": "@10"
+         },
+         {
+            "type": "sup_date",
+            "date": "08:00"
+         }
+      ],
+      "actions": [
+         {
+            "actuator": "10",
+            "value": "21"
+         }
+      ]
+   },
+   {
+      "ruleName": "nomRegleInit2",
+      "conditions": [
+         {
+            "type": "inf",
+            "leftOp": "1",
+            "rightOp": "@10"
+         },
+         {
+            "type": "inf_date",
+            "date": "08:00"
+         }
+      ],
+      "actions": [
+         {
+            "actuator": "11",
+            "value": "21"
+         }
+      ]
+   }
+  
+]
