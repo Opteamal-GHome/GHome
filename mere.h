@@ -5,6 +5,8 @@
 #define ERR 2
 #define INFO 3
 
+#include "gestion_capteurs.h"
+
 enum logLvl{
   LOG,
   WARNING,
