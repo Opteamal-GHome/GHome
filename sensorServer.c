@@ -82,7 +82,6 @@ void * startSensorServer(void * args){
           break;
         default :
           sendLog(WARNING,"Unexpected frame type : %c",received.type);
-
       }
     }
     sendLog(LOG,"Client deconected");

@@ -1,12 +1,14 @@
 #ifndef __MERE_H
 #define __MERE_H
 
+#include <mqueue.h>
+#include "gestion_capteurs.h"
+
 #define STOP 1
 #define ERR 2
 #define INFO 3
-#define MAX_DEV 40
-
-#include "gestion_capteurs.h"
+#define REST 1
+#define SENSORS 2
 
 enum logLvl{
   LOG,
@@ -15,10 +17,11 @@ enum logLvl{
   DEBUG
 };
 
-struct DEVICE devices [MAX_DEV];
+int sendNetMsg(int destination, int len, char * msg);
 
-void * startSensorServer(void *);
-void * startDispatchServer(void * args);
+void * startSensorServer(void *); //Implemented in sensorServer.c
+void * startDispatchServer(void * args); //Implemented in dispatchServer.c
+void * startRestRcv(void * args); //implemented in restRcv.c
 
 int sendLog(enum logLvl level, char * format,...);
 //This function allows a thread to ask for a information to be logged

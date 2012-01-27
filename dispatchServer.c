@@ -1,12 +1,46 @@
 #include "mere.h"
 #include "tcpserver.h"
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include <mqueue.h>
+#include <errno.h>
+
+struct netMsg {
+  int dest; //Can be either REST or SENSORS
+  int msgSize;
+  char * data;
+};
+static mqd_t dispatchReq;
+int sendNetMsg(int destination, int len, char * msg){
+  struct netMsg newMsg={
+    .dest=destination,
+    .msgSize=len,
+  };
+  if (dispatchReq==0) {
+    sendLog(DEBUG,"dispatch mq not opened yet"); //I don't think this is actually possible.
+    return -1;
+  }
+  //Allocate enough memory to copy the msg,
+  //so that the original buffer can be freed after this function call.
+  //this memory will be freed once the message is read.
+  newMsg.data=malloc(len); 
+  memcpy(newMsg.data,msg,len);
+  if (mq_send(dispatchReq,(void*)&newMsg,sizeof(struct netMsg),0)){
+    sendErr(WARNING,"mq_send dispatch request failed",errno);
+    return -1;
+  }
+  return 0;
+}
 
 void * startDispatchServer(void * args) {
   int socketSensors=0;
   int socketRest=0;
+  int stop=0;
+  int msgSize;
+  struct netMsg received;
   sigset_t set;
 
   sigemptyset(&set);
@@ -18,5 +52,29 @@ void * startDispatchServer(void * args) {
   //it is however a rather inelegant way to do it,
   //there must be some other way to achieve this.
   
+  //get the message queue id :
+  dispatchReq=*(mqd_t*)args;
+  for (stop=0; stop!=STOP;) {
+    msgSize=mq_receive(dispatchReq, (void*)&received, sizeof(received), NULL);
+    if (msgSize==-1) {
+      sendErr(DEBUG,"mq_receive",errno);
+      if (errno==EINTR) {
+        continue; //we were interupted because a siqnal was caught
+      } else {
+        stop=STOP;//There is probably some other crapy error, exit.
+        continue;
+      }
+    }
+    switch (received.dest){
+      case REST:
+        break;
+      case SENSORS:
+        break;
+      default:
+        sendLog(WARNING,"dispatch msg, unexpected message dest received : %d",\
+            received.dest);
+    }
+    free(received.data); //Allocated in sendNetMsg
+  }
   return NULL;
 } 

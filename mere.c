@@ -24,6 +24,7 @@ static int verbose=0;
 
 pthread_t sst; //sensorServerThread
 pthread_t dst; //dispatchServerThread
+pthread_t rrt; //rest rcv Thread
 struct msgData{
   int errnb;
   enum logLvl level;
@@ -34,10 +35,8 @@ struct mlog{
   long mtype; //can be 0 for message or 1 for control
   struct msgData mtext;
 };
+static mqd_t dispatchReq; //message queue to send messages to the outside world 
 static mqd_t msgLog; 
-static mqd_t dispatchReq; 
-
-struct DEVICE devices[MAX_DEV]; //memory preallocated for sensors control
 
 int sendLog(enum logLvl level, char * format,...) {
   struct mlog msg = {
@@ -115,9 +114,10 @@ void handler(int sigNb){
       break;
   }
   //ask for application termination
-  //test sendLog :
   logMsg(LOG,"Exiting application");
   logMsg(DEBUG,"Canceling sst thread");
+  pthread_cancel(rrt);
+  pthread_cancel(dst);
   ret=pthread_cancel(sst);
   if(ret==-1){
     logErr(WARNING,"Canceling failed",errno);
@@ -128,9 +128,15 @@ void handler(int sigNb){
       logErr(WARNING,"joining failed",errno);
     }
   }
-  logMsg(DEBUG,"Removing message queue");
+  logMsg(DEBUG,"Removing message queues");
+  if(mq_close(dispatchReq)){
+    logErr(WARNING,"mq_close dispatchReq",errno);
+  }
+  if(mq_unlink(MQ_DISPATCH_NAME)){
+    logErr(DEBUG,"mq_unlink",errno);
+  }
   if(mq_close(msgLog)){
-    logErr(WARNING,"mq_close",errno);
+    logErr(WARNING,"mq_close msgLog",errno);
   }
   if(mq_unlink(MQ_LOG_NAME)){
     logErr(DEBUG,"mq_unlink",errno);
@@ -173,7 +179,10 @@ int main(int argc, char * argv[]) {
 
   //create log mailbox :
 	if(mq_unlink(MQ_LOG_NAME)){
-    logErr(DEBUG,"mq_unlink",errno);
+    logErr(DEBUG,"mq_unlink log",errno);
+  }
+	if(mq_unlink(MQ_DISPATCH_NAME)){
+    logErr(DEBUG,"mq_unlink dispatch",errno);
   }
   
   attrs.mq_msgsize=200,
@@ -195,14 +204,19 @@ int main(int argc, char * argv[]) {
   }
 
   //create various threads : 
+  if (pthread_create(&dst,NULL,startDispatchServer,&dispatchReq)!=0){
+    logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
+    handler(0);
+  }
   if (pthread_create(&sst,NULL,startSensorServer,NULL)!=0){
     logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
     handler(0);
   }
   //Start the thread with the defaults arguments, using the startSensorServer 
   //function as entry point, with no arguments to this function.
-  if (pthread_create(&dst,NULL,startDispatchServer,NULL)!=0){
-    logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
+
+  if (pthread_create(&rrt,NULL,startRestRcv,NULL)!=0){
+    logErr(ERROR,"pthread_create failed for rest receive thread", errno);
     handler(0);
   }
 
