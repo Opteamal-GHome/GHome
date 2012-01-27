@@ -6,6 +6,8 @@
 #define INFO 3
 #define MAX_DEV 40
 
+#include "gestion_capteurs.h"
+
 enum logLvl{
   LOG,
   WARNING,
