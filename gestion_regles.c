@@ -39,8 +39,11 @@ void addRules(json_t * rules, int positionDepart) {
  */
 int addRule(json_t * rule, int position) {
 	int added = checkRuleCoherence(rule);
-	if (added == TRUE
-			&& (int) getRuleByName(
+	if (added != TRUE){
+		return FALSE;
+	}
+
+	if ((int) getRuleByName(
 					json_string_value(
 							json_object_get(rule, "ruleName"))) == FALSE) {
 		if (json_array_insert(root, position, rule) == FALSE) {
@@ -48,7 +51,14 @@ int addRule(json_t * rule, int position) {
 		} else {
 			json_array_clear(rule);
 		}
+	}else{
+		sendLog(DEBUG,"Rule Incoherence: name already in use %s",json_string_value(json_object_get(rule, "ruleName")));
+		json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Rule_name","cause", "already_in_use");
+		char * msg = json_dumps(errorMsg, 0);
+		sendNetMsg(REST,strlen(msg),msg);
+		return FALSE;
 	}
+
 
 	return added;
 }
@@ -59,8 +69,7 @@ json_t * convertToJson(char * string) {
 	jsonString = json_loads(string, 0, &error);
 
 	if (!jsonString) {
-		fprintf(stderr, "error: on line %d: %s\nBonus position:%d\nSource:%s",
-				error.line, error.text, error.position, error.source);
+		sendLog(DEBUG,"Invalid JSON msg: on line %d: %s at position:%d",error.line, error.text, error.position);
 		return (json_t *)FALSE;
 	}
 	return jsonString;
@@ -97,7 +106,7 @@ int checkMainRulesCoherence() {
 		json_t *rule = json_array_get(root, i);
 
 		if (checkRuleCoherence(rule) == FALSE) {
-			printf("Rule: %s removed\n",
+			sendLog(DEBUG,"Rule: %s removed",
 					json_string_value(json_object_get(rule, "ruleName")));
 			removeRuleByIndex(i);
 		}
@@ -158,10 +167,12 @@ int checkRuleCoherence(json_t * rule) {
 								//On cherche si le capteur existe en memoire
 								if (getMemDevice(atoi(idCaptor))
 										== (struct DEVICE *) -1) {
-									//sendLog(WARNING, "Rule Incoherence: sensor:%s inexistant",idCaptor);
-									printf(
-											"Rule Incoherence: sensor:%s inexistant\n",
-											idCaptor);
+									sendLog(DEBUG, "Rule Incoherence: sensor:%s inexistant",idCaptor);
+									json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:i}","msgType", "R_newRule","status", "REFUSED","error", "ID","cause", idCaptor);
+									char * msg = json_dumps(errorMsg, 0);
+									sendNetMsg(REST,strlen(msg),msg);
+									free(msg);
+
 									return FALSE;
 								}
 							}
@@ -169,8 +180,11 @@ int checkRuleCoherence(json_t * rule) {
 
 					} else {
 						//Operande manquante
-						//sendLog(WARNING, "Rule Incoherence: operande missing");
-						printf("Rule Incoherence: operande missing\n");
+						sendLog(DEBUG, "Rule Incoherence: operande missing");
+						json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Operande","cause", "missing");
+						char * msg = json_dumps(errorMsg, 0);
+						sendNetMsg(REST,strlen(msg),msg);
+						free(msg);
 						return FALSE;
 					}
 
@@ -182,12 +196,20 @@ int checkRuleCoherence(json_t * rule) {
 							json_object_get(condition, "date"));
 					if (date == NULL) {
 						//Operande manquante
-						//sendLog(WARNING, "Rule Incoherence: date missing");
-						printf("Rule Incoherence: date missing\n");
+						sendLog(DEBUG, "Rule Incoherence: date missing");
+						json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Date","cause", "missing");
+						char * msg = json_dumps(errorMsg, 0);
+						sendNetMsg(REST,strlen(msg),msg);
+						free(msg);
 						return FALSE;
 					}
 					break;
 				case UNKNOWN:
+					sendLog(DEBUG, "Rule Incoherence: operation type unknown");
+					json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Operation_Type","cause", "unknown");
+					char * msg = json_dumps(errorMsg, 0);
+					sendNetMsg(REST,strlen(msg),msg);
+					free(msg);
 					return FALSE;
 					break;
 				default:
@@ -196,8 +218,10 @@ int checkRuleCoherence(json_t * rule) {
 
 			} else {
 				//Aucune condition
-				//sendLog(WARNING, "Rule Incoherence: condition missing");
-				printf("Rule Incoherence: condition missing\n");
+				sendLog(DEBUG, "Rule Incoherence: condition missing");
+				json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Condition","cause", "missing");
+				char * msg = json_dumps(errorMsg, 0);
+				sendNetMsg(REST,strlen(msg),msg);
 				return FALSE;
 			}
 
@@ -213,13 +237,21 @@ int checkRuleCoherence(json_t * rule) {
 					&& (int) getMemDevice(
 							atoi(json_string_value(actuator))) != FALSE) {
 			} else {
-				printf("Rule Incoherence: actuator %d missing\n",
+				sendLog(DEBUG,"Rule Incoherence: actuator %d missing",
 						atoi(json_string_value(actuator)));
+				json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:i}","msgType", "R_newRule","status", "REFUSED","error", "ID","cause", atoi(json_string_value(actuator)));
+				char * msg = json_dumps(errorMsg, 0);
+				sendNetMsg(REST,strlen(msg),msg);
+				free(msg);
 				return FALSE;
 			}
 		}
 	}else{
-		//Pas d'actions!!!
+		sendLog(DEBUG,"Rule Incoherence: no actions");
+		json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "No_actions","cause", "null");
+		char * msg = json_dumps(errorMsg, 0);
+		sendNetMsg(REST,strlen(msg),msg);
+		return FALSE;
 	}
 
 	return TRUE;
@@ -375,7 +407,7 @@ int checkRule(json_t * rule) {
 		json_t *action = json_array_get(actions, j);
 		if (doActions(action) != FALSE) {
 			//Si la demande de l'action a été effectuée
-			printf("Regle mise à jour %s\n",
+			sendLog(DEBUG,"Regle validee: %s",
 					json_string_value(json_object_get(rule, "ruleName")));
 		}
 	}
