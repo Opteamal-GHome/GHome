@@ -32,8 +32,6 @@ int sendNetMsg(int destination, int len, char * msg){
 }
 
 void * startDispatchServer(void * args) {
-  int socketSensors=0;
-  int socketRest=0;
   int stop=0;
   int msgSize;
   struct netMsg received;
@@ -49,6 +47,7 @@ void * startDispatchServer(void * args) {
   //there must be some other way to achieve this.
   
   //get the message queue id :
+  sendLog(DEBUG,"dispatch thread started");
   dispatchReq=*(mqd_t*)args;
   for (stop=0; stop!=STOP;) {
     msgSize=mq_receive(dispatchReq, (void*)&received, sizeof(struct netMsg), NULL);
@@ -63,14 +62,16 @@ void * startDispatchServer(void * args) {
     }
     switch (received.dest){
       case REST:
+        transmit(socketRestClient,received.data,received.msgSize);
         break;
       case SENSORS:
+        transmit(socketSensorClient,received.data,received.msgSize);
         break;
       default:
         sendLog(WARNING,"dispatch msg, unexpected message dest received : %d",\
             received.dest);
     }
-    free(received.data); //Allocated in sendNetMsg
+    free(received.data); //Allocated in sendNetMsg()
   }
   return NULL;
 } 

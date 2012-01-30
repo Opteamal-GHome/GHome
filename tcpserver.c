@@ -87,7 +87,6 @@ int initServer(listen_port){
 	int options = 1;
 
 	port = htons(listen_port);
-  sendLog(DEBUG,"AF_INET : %d, SOCK_STREAM %d",AF_INET,SOCK_STREAM);
 	listen_socketd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(listen_socketd == -1) {
@@ -144,11 +143,11 @@ void closeClient(int clientSock){
   shutdown(clientSock, SHUT_RDWR);
 	close(clientSock);
 }
-int receive(int socket, void * buff, int bytesNb){
+int receive(int socket, void * buff, int size){
   size_t ret = 0;
   size_t bytesRcv = 0;
-  for (bytesRcv=0; bytesRcv<bytesNb; ){
-    ret=recv(socket,(void*)(buff+bytesRcv),bytesNb-ret,0);
+  for (bytesRcv=0; bytesRcv<size; ){
+    ret=recv(socket,(void*)(buff+bytesRcv),size-ret,0);
     bytesRcv+=ret;
     if (ret==0){
       closeClient(socket);
@@ -163,10 +162,11 @@ int receive(int socket, void * buff, int bytesNb){
   return ret;
 }
 
-void transmit(int socket, char * buff, int size){
+int transmit(int socket, char * buff, int size){
   if (send(socket, buff, size,0)==-1)
   {
     sendErr(DEBUG,"send on socket failed",errno); 
+    return -1;
   }
-
+  return 0;
 }

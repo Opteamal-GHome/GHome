@@ -52,7 +52,7 @@ void * startSensorServer(void * args){
   //it is however a rather inelegant way to do it,
   //there must be some other way to achieve this.
 
-  sendLog(DEBUG,"sensorServer started");
+  sendLog(DEBUG,"sensor reception thread started");
   socketSensorClient=0;
   socketServer=initServer(listen_port);
   if (socketServer==-1) {
@@ -71,6 +71,7 @@ void * startSensorServer(void * args){
       ret = receive(socketSensorClient, (void*)&received ,5);
       sendLog(DEBUG,"Received new frame,\n\ttimestamp : %d,\n\ttype : '%c',",\
           received.timestamp, received.type);
+      sendNetMsg(SENSORS,9,"coucou!\n"); //test transmit function
       switch (received.type) {
         case 'S' :
           getSData();

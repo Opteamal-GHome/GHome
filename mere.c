@@ -115,12 +115,12 @@ void handler(int sigNb){
   }
   //ask for application termination
   logMsg(LOG,"Exiting application");
-  logMsg(DEBUG,"Canceling sst thread");
+  logMsg(DEBUG,"Canceling threads");
   pthread_cancel(rrt);
   pthread_cancel(dst);
   ret=pthread_cancel(sst);
   if(ret==-1){
-    logErr(WARNING,"Canceling failed",errno);
+    logErr(WARNING,"Canceling sst thread failed",errno);
   } else {
     logMsg(DEBUG,"Joining sst thread");
     ret=pthread_join(sst,NULL);
@@ -224,7 +224,7 @@ int main(int argc, char * argv[]) {
   //Wait for messages to log :
   received.mtype=INFO;
   received.mtext.level=DEBUG;
-  memcpy(received.mtext.data,"test message received",18);
+  memcpy(received.mtext.data,"test message received",22);
   if (mq_send(msgLog, (void *)&received, sizeof(struct mlog),0)==-1) {
     logErr(WARNING,"mq_send failed",errno);
   }
