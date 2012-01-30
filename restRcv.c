@@ -15,6 +15,7 @@ int requestTreatment(char *requestRule);
 
 void * startRestRcv(void * args) {
   sigset_t set;
+  int ret=0;
   int socketServer = 0;
   long long sizeRequest;
   char *received; //thos has to be changed to something real^^
@@ -36,36 +37,40 @@ void * startRestRcv(void * args) {
   }
   sendLog(DEBUG, "restServer initialized, socket descriptor : %d",
       socketServer);
-  socketRestClient = waitClient(socketServer);
-  if (socketRestClient == -1) {
-    sendErr(WARNING, "restServer, wait failed", errno);
-    return NULL;
-  }
-  sendLog(DEBUG, "restServer client connected");
 
   //INIT Memory for test
   initTestMemory();
   initMainRules(NULL); //TO CHANGE
 
-  while (1) {
-    receive(socketRestClient, (void*) &sizeRequest, sizeof(long long));
-    sendLog(DEBUG, "restServer resquest size: %lld", sizeRequest);
-
-    if (sizeRequest < MAX_MSG_LENGTH && sizeRequest > 0) {
-      //Message correct
-      received = malloc(sizeRequest + 1);
-      received[sizeRequest + 1] = '\0';
-      receive(socketRestClient, (char*) received, sizeRequest); //sizeRequest
-
-      if (requestTreatment(received) == TRUE) {
-        sendLog(DEBUG, "Request done");
-      } else {
-        sendLog(DEBUG, "Request ignored");
-      }
-      free(received);
-    } else {
-      sendLog(DEBUG, "restServer resquest too large!!!");
+  for (;;) {
+    socketRestClient = waitClient(socketServer);
+    if (socketRestClient == -1) {
+      sendErr(WARNING, "restServer, wait failed", errno);
+      return NULL;
     }
+    sendLog(LOG, "restServer connected");
+
+    for (ret=0; ret!=-1;) {
+      ret=receive(socketRestClient, (void*) &sizeRequest, sizeof(long long));
+      sendLog(DEBUG, "restServer resquest size: %lld", sizeRequest);
+
+      if (sizeRequest < MAX_MSG_LENGTH && sizeRequest > 0) {
+        //Message correct
+        received = malloc(sizeRequest + 1);
+        received[sizeRequest + 1] = '\0';
+        receive(socketRestClient, (char*) received, sizeRequest); //sizeRequest
+
+        if (requestTreatment(received) == TRUE) {
+          sendLog(DEBUG, "Request done");
+        } else {
+          sendLog(DEBUG, "Request ignored");
+        }
+        free(received);
+      } else {
+        sendLog(DEBUG, "restServer resquest too large!!!");
+      }
+    }
+    sendLog(LOG,"restServer deconected");
   }
   return NULL;
 }

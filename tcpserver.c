@@ -12,7 +12,6 @@
 #include <errno.h>
 #include "mere.h"
 
-#define SERVER_STOP 42
 #define forward_address "127.0.0.1"
 #define forward_port 1337
 
