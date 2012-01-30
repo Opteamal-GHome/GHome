@@ -16,9 +16,17 @@
 #define ACCES 0660
 #define LOG_SIZE 150
 #define ERR_SIZE 30
-#define MSG_SIZE 140
+#define MSG_SIZE 130
 #define MQ_LOG_NAME "/mqLog"
 #define MQ_DISPATCH_NAME "/mqDis"
+
+#define RED(a) "\x1b[31m"a"\x1b[0m"
+#define MAGENTA(a) "\x1b[35m"a"\x1b[0m"
+#define BLUE(a) "\x1b[34m"a"\x1b[0m"
+#define GREEN(a) "\x1b[32m"a"\x1b[0m"
+#define BOLD(a) "\x1b[1m"a"\x1b[0m"
+#define UNDERLINED(a) "\x1b[4m"a"\x1b[0m"
+
 static FILE * logFile=NULL;
 static int verbose=0;
 
@@ -28,7 +36,7 @@ pthread_t rrt; //rest rcv Thread
 struct msgData{
   int errnb;
   enum logLvl level;
-  char data[140];
+  char data[MSG_SIZE];
 };
 
 struct mlog{
@@ -64,7 +72,7 @@ int sendErr(enum logLvl level, char * info, int errnb) {
   };
   memcpy(msg.mtext.data,info,strlen(info));
   if (mq_send(msgLog,(void *)&msg, sizeof(struct mlog),1)==-1) {
-    perror("[ERROR] sendLog");
+    perror("'\[\x1b[31m\\][ERROR] sendLog\\[\x1b[0m\\]");
     return -1;
   }
   return 0;
@@ -72,24 +80,27 @@ int sendErr(enum logLvl level, char * info, int errnb) {
 
 static int logMsg(enum logLvl level, char * msg) {
 
-  char buff[LOG_SIZE];
   switch (level){
     case LOG :
-      snprintf(buff,LOG_SIZE,"%s %s\n","[LOG]",msg);
+      fprintf(logFile,"[LOG] ");
+      printf(BOLD(GREEN("[LOG] ")));
       break;
     case WARNING :
-      snprintf(buff,LOG_SIZE,"%s %s\n","[WARN]",msg);
+      fprintf(logFile,"[WARN] ");
+      printf(BOLD(MAGENTA("[WARN] ")));
       break;
     case ERROR :
-      snprintf(buff,LOG_SIZE,"%s %s\n","[ERROR]",msg);
+      fprintf(logFile,"[ERROR] ");
+      printf(BOLD(RED("[ERROR] ")));
       break;
     case DEBUG :
-      snprintf(buff,LOG_SIZE,"%s %s\n","[DEBUG]",msg);
+      fprintf(logFile,"[DEBUG] ");
+      printf(BOLD(BLUE("[DEBUG] ")));
       break;
   }
-  fprintf(logFile,"%s",buff);
+  fprintf(logFile,"%s\n",msg);
   if (verbose>=1 || level==ERROR){
-    printf("%s",buff);
+    printf("%s\n",msg);
   }
   return 0;
 }
@@ -215,11 +226,11 @@ int main(int argc, char * argv[]) {
     logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
     handler(0);
   }
-  //TODO : wait for both servers to have a client.
   if (pthread_create(&rrt,NULL,startRestRcv,NULL)!=0){
     logErr(ERROR,"pthread_create failed for rest receive thread", errno);
     handler(0);
   }
+  //TODO : wait for both servers to have a client.
 
   //Wait for messages to log :
   received.mtype=INFO;
