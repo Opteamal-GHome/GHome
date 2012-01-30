@@ -65,6 +65,7 @@ void * startSensorServer(void * args){
     if (socketSensorClient==-1) {
       return NULL;
     }
+    sendLog(LOG, "Sensors client connected");
     for (ret=0; ret!=-1;){
       //Each frame is cut in 3 pieces, timestamp, type and data
       //The first two pieces have a fixed size of 5 bytes, let's get those.
