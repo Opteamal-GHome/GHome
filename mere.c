@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <mqueue.h>
+#include <semaphore.h>
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
@@ -33,6 +34,7 @@ static int verbose=0;
 pthread_t sst; //sensorServerThread
 pthread_t dst; //dispatchServerThread
 pthread_t rrt; //rest rcv Thread
+pthread_t iet; //inference engine Thread
 struct msgData{
   int errnb;
   enum logLvl level;
@@ -129,6 +131,7 @@ void handler(int sigNb){
   logMsg(DEBUG,"Canceling threads");
   pthread_cancel(rrt);
   pthread_cancel(dst);
+  pthread_cancel(iet);
   ret=pthread_cancel(sst);
   if(ret==-1){
     logErr(WARNING,"Canceling sst thread failed",errno);
@@ -215,6 +218,10 @@ int main(int argc, char * argv[]) {
     return -1;
   }
 
+  //Create semaphore for the engine :
+  if(sem_init(&sem, 0, 0)==-1){
+    logErr(ERROR,"sem_init",errno);
+  }
   //create various threads : 
   if (pthread_create(&dst,NULL,startDispatchServer,&dispatchReq)!=0){
     logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
@@ -229,6 +236,9 @@ int main(int argc, char * argv[]) {
   if (pthread_create(&rrt,NULL,startRestRcv,NULL)!=0){
     logErr(ERROR,"pthread_create failed for rest receive thread", errno);
     handler(0);
+  }
+  if (pthread_create(&iet,NULL,startEngine,NULL)!=0){
+    logErr(ERROR,"pthread_create failes for inference engine thread",errno);
   }
   //TODO : wait for both servers to have a client.
 

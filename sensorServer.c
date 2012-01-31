@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <semaphore.h>
 
 #define listen_port 80
 
@@ -73,6 +74,7 @@ void * startSensorServer(void * args){
       sendLog(DEBUG,"Received new frame,\n\ttimestamp : %d,\n\ttype : '%c',",\
           received.timestamp, received.type);
       sendNetMsg(SENSORS,9,"coucou!\n"); //test transmit function
+      sem_post(&sem);
       switch (received.type) {
         case 'S' :
           getSData();

@@ -6,7 +6,7 @@ EDLFLAGS=-Wall -m32
 EXE=ghome #Nom du binaire à construire
 
 OBJ=tcpserver.o mere.o sensorServer.o gestion_capteurs.o gestion_regles.o dispatchServer.o\
-		restRcv.o
+		restRcv.o engine.o
 LIBS=-lpthread -lrt -ljansson
 
 

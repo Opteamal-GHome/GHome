@@ -2,6 +2,7 @@
 #define __MERE_H
 
 #include <mqueue.h>
+#include <semaphore.h>
 #include "gestion_capteurs.h"
 
 #define STOP 1
@@ -12,6 +13,7 @@
 
 int socketSensorClient;
 int socketRestClient;
+sem_t sem; 
 enum logLvl{
   LOG,
   WARNING,
@@ -25,6 +27,7 @@ struct netMsg {
 };
 int sendNetMsg(int destination, int len, char * msg);
 
+void * startEngine(void * args);
 void * startSensorServer(void *); //Implemented in sensorServer.c
 void * startDispatchServer(void * args); //Implemented in dispatchServer.c
 void * startRestRcv(void * args); //implemented in restRcv.c
