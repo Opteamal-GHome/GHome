@@ -53,7 +53,7 @@ int addRule(json_t * rule, int position) {
 		}
 	}else{
 		sendLog(DEBUG,"Rule Incoherence: name already in use %s",json_string_value(json_object_get(rule, "ruleName")));
-		json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Rule_name","cause", "already_in_use");
+		json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "name_already_in_use");
 		char * msg = json_dumps(errorMsg, 0);
 		sendNetMsg(REST,strlen(msg),msg);
 		return FALSE;
@@ -181,7 +181,7 @@ int checkRuleCoherence(json_t * rule) {
 					} else {
 						//Operande manquante
 						sendLog(DEBUG, "Rule Incoherence: operande missing");
-						json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Operande","cause", "missing");
+						json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "operande_missing");
 						char * msg = json_dumps(errorMsg, 0);
 						sendNetMsg(REST,strlen(msg),msg);
 						free(msg);
@@ -197,7 +197,7 @@ int checkRuleCoherence(json_t * rule) {
 					if (date == NULL) {
 						//Operande manquante
 						sendLog(DEBUG, "Rule Incoherence: date missing");
-						json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Date","cause", "missing");
+						json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "date_missing");
 						char * msg = json_dumps(errorMsg, 0);
 						sendNetMsg(REST,strlen(msg),msg);
 						free(msg);
@@ -206,7 +206,7 @@ int checkRuleCoherence(json_t * rule) {
 					break;
 				case UNKNOWN:
 					sendLog(DEBUG, "Rule Incoherence: operation type unknown");
-					json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Operation_Type","cause", "unknown");
+					json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "operation_type_unknown");
 					char * msg = json_dumps(errorMsg, 0);
 					sendNetMsg(REST,strlen(msg),msg);
 					free(msg);
@@ -219,7 +219,7 @@ int checkRuleCoherence(json_t * rule) {
 			} else {
 				//Aucune condition
 				sendLog(DEBUG, "Rule Incoherence: condition missing");
-				json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "Condition","cause", "missing");
+				json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "condition_missing");
 				char * msg = json_dumps(errorMsg, 0);
 				sendNetMsg(REST,strlen(msg),msg);
 				return FALSE;
@@ -248,7 +248,7 @@ int checkRuleCoherence(json_t * rule) {
 		}
 	}else{
 		sendLog(DEBUG,"Rule Incoherence: no actions");
-		json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "No_actions","cause", "null");
+		json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "no_actions");
 		char * msg = json_dumps(errorMsg, 0);
 		sendNetMsg(REST,strlen(msg),msg);
 		return FALSE;
