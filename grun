@@ -1,0 +1,4 @@
+#!/bin/zsh
+export LD_PRELOAD="/usr/lib32/libgmem.so"
+$1
+export LD_PRELOAD=""

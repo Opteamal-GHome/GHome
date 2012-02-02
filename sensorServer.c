@@ -105,8 +105,6 @@ void * startSensorServer(void * args){
       //sruct frame because of its definition : 
       // - int 4 bytes, 
       // - char 1 byte + 3 discarded bytes.
-      //This wouldn't be true in a 64bit arch since word size would 
-      //then grow to 8 bytes.
       sendLog(DEBUG,"Received new frame,\n\ttimestamp : %ud,\n\ttype : '%c',",\
           received.timestamp, received.type);
       sendNetMsg(SENSORS,9,"coucou!\n"); //test transmit function
