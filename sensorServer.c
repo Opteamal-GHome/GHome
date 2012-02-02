@@ -65,6 +65,7 @@ static void getOData(){
   receive(socketSensorClient, (void *)&received, 8);
   sendLog(DEBUG,"sensor ID : %d, sensor value : %d",\
       received.sensorId, received.data);
+  setValue(received.sensorId, received.data);
 }
 
 void * startSensorServer(void * args){
