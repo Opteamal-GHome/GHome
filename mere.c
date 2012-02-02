@@ -24,6 +24,7 @@
 #define RED(a) "\x1b[31m"a"\x1b[0m"
 #define MAGENTA(a) "\x1b[35m"a"\x1b[0m"
 #define BLUE(a) "\x1b[34m"a"\x1b[0m"
+#define CYAN(a) "\x1b[36m"a"\x1b[0m"
 #define GREEN(a) "\x1b[32m"a"\x1b[0m"
 #define BOLD(a) "\x1b[1m"a"\x1b[0m"
 #define UNDERLINED(a) "\x1b[4m"a"\x1b[0m"
@@ -89,7 +90,7 @@ static int logMsg(enum logLvl level, char * msg) {
       break;
     case WARNING :
       fprintf(logFile,"[WARN] ");
-      printf(BOLD(MAGENTA("[WARN] ")));
+      printf(BOLD(CYAN("[WARN] ")));
       break;
     case ERROR :
       fprintf(logFile,"[ERROR] ");

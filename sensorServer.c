@@ -2,6 +2,8 @@
 //Author(s) : Rapahel C.
 #include "mere.h"
 #include "tcpserver.h"
+#include "gestion_capteurs.h"
+#include <string.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
@@ -12,11 +14,10 @@
 struct frame {
   unsigned int timestamp;
   char type;
-  char * data;
 };
 struct sData {
   char infoType;
-  int sensorId;
+  unsigned int sensorId;
   char sensorType;
 };
 struct oData {
@@ -24,11 +25,39 @@ struct oData {
   int data; 
 };
 
-static void getSData(){
+static void getSData(unsigned int timestamp){
+  //This frames are used to create or remove sensors, let's do that :
   struct sData received;
-  receive(socketSensorClient, (void *)&received, 6);
-  sendLog(DEBUG,"info type : '%c', sensor ID : %d, sensor type : '%c'",\
+  char data[6];
+  int i;
+  receive(socketSensorClient, (void *)data, 6);
+  for (i=0; i<6; i++){
+    sendLog(DEBUG,"%x ", data[i]);
+  }
+  received.infoType=data[0];
+  memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
+  received.sensorType=data[5];
+  sendLog(DEBUG,"\ninfo type : '%c', sensor ID : %x, sensor type : '%c'",\
       received.infoType, received.sensorId, received.sensorType);
+  switch (received.infoType){
+  case 'A' :
+  //look for a vacation in sensors table : 
+    for (i=0; i<NB_SENSORS; i++){
+      if(sensors[i].id==0){
+        sensors[i].id=received.sensorId;
+        sensors[i].type=received.sensorType;
+        sensors[i].timestamp=timestamp;
+        return; 
+      }
+    }
+    sendLog(WARNING,"No more room in sensor table");
+    break;
+  case 'R' :
+    removeMemDevice(received.sensorId);
+    break;
+  default :
+    sendLog(WARNING,"Unknown info type in S frame decoding");
+  }
 } 
 
 static void getOData(){
@@ -71,13 +100,19 @@ void * startSensorServer(void * args){
       //Each frame is cut in 3 pieces, timestamp, type and data
       //The first two pieces have a fixed size of 5 bytes, let's get those.
       ret = receive(socketSensorClient, (void*)&received ,5);
-      sendLog(DEBUG,"Received new frame,\n\ttimestamp : %d,\n\ttype : '%c',",\
+      //In the previous call we don't need to worry about mem align for
+      //sruct frame because of its definition : 
+      // - int 4 bytes, 
+      // - char 1 byte + 3 discarded bytes.
+      //This wouldn't be true in a 64bit arch since word size would 
+      //then grow to 8 bytes.
+      sendLog(DEBUG,"Received new frame,\n\ttimestamp : %ud,\n\ttype : '%c',",\
           received.timestamp, received.type);
       sendNetMsg(SENSORS,9,"coucou!\n"); //test transmit function
       sem_post(&sem);
       switch (received.type) {
         case 'S' :
-          getSData();
+          getSData(received.timestamp);
           break;
         case 'D' :
         case 'O' :

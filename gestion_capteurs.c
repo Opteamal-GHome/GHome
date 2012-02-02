@@ -5,6 +5,7 @@
  *      Author: mica
  */
 #include "gestion_capteurs.h"
+#include <string.h>
 
 /**
  * Renvoie la structure associée du capteur d'ID id ou -1 si il n'existe pas
@@ -24,7 +25,7 @@ void removeMemDevice(id){
 	struct DEVICE* sensor;
 	sensor = getMemDevice(id);
 	if(sensor != (struct DEVICE*) FALSE){
-		sensor->id = FALSE;
+		sensor->id = 0;
 	}
 
 }
@@ -39,6 +40,7 @@ int setValue(int id, int value){
 }
 
 void initTestMemory(){
+  memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
 	sensors[0].id = 10;
 	sensors[0].type = 'S';
 	sensors[0].value = 42;
