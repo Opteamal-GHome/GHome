@@ -12,7 +12,7 @@
 #define listen_port 80
 
 struct frame {
-  unsigned int timestamp;
+  unsigned long long timestamp;
   char type;
 };
 struct sData {
@@ -25,7 +25,7 @@ struct oData {
   int data; 
 };
 
-static void getSData(unsigned int timestamp){
+static void getSData(unsigned long long timestamp){
   //This frames are used to create or remove sensors, let's do that :
   struct sData received;
   char data[6];
@@ -99,15 +99,14 @@ void * startSensorServer(void * args){
     sendLog(LOG, "Sensors client connected");
     for (ret=0; ret!=-1;){
       //Each frame is cut in 3 pieces, timestamp, type and data
-      //The first two pieces have a fixed size of 5 bytes, let's get those.
-      ret = receive(socketSensorClient, (void*)&received ,5);
+      //The first two pieces have a fixed size of 9 bytes, let's get those.
+      ret = receive(socketSensorClient, (char*)&received ,9);
       //In the previous call we don't need to worry about mem align for
       //sruct frame because of its definition : 
       // - int 4 bytes, 
       // - char 1 byte + 3 discarded bytes.
-      sendLog(DEBUG,"Received new frame,\n\ttimestamp : %ud,\n\ttype : '%c',",\
+      sendLog(DEBUG,"Received new frame,\n\ttimestamp : %llu,\n\ttype : '%c',",\
           received.timestamp, received.type);
-      sendNetMsg(SENSORS,9,"coucou!\n"); //test transmit function
       sem_post(&sem);
       switch (received.type) {
         case 'S' :

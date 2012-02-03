@@ -17,7 +17,7 @@ struct DEVICE{ //Structure memoire
 	int id;
 	int value;
 	char type;
-	unsigned int timestamp;
+	unsigned long long timestamp;
 };
 
 struct DEVICE sensors[NB_SENSORS];//Pr modeliser la memoire
