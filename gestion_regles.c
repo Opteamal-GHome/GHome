@@ -4,95 +4,105 @@
  *  Created on: 23 janv. 2012
  *      Author: mica
  */
+#include <stdio.h>
+#include <stdlib.h>
 #include "gestion_regles.h"
+typedef struct json_object json_object;
 
 enum OPERATION_TYPE getOperator(const char * balise);
 
 int actuatorAlreadyUpdated[NB_SENSORS];
 int lastIndexUpdated;
 
-json_t * getRuleByName(const char * name);
-int removeRule(json_t *ruleToRemove);
-int checkRule(json_t * rule);
-int checkCondition(json_t * condition);
+json_object * getRuleByName(const char * name);
+int removeRule(json_object *ruleToRemove);
+int checkRule(json_object * rule);
+int checkCondition(json_object * condition);
 int updateActuator(int id);
-int doActions(json_t * action);
+int doActions(json_object * action);
 
-void initMainRules(json_t * initSource) {
+void initMainRules(json_object * initSource) {
 
-	root = json_array();
+	root = json_object_new_array();
 
-	if (!json_is_null(initSource)) {
+	if (initSource != NULL) {
 		addRules(initSource, 0);
 	}
 }
 
-void addRules(json_t * rules, int positionDepart) {
+void addRules(json_object * rules, int positionDepart) {
 	int i;
-	for (i = 0; i < json_array_size(rules); i++) {
-		json_t *rule = json_array_get(rules, i);
+	for (i = 0; i < json_object_array_length(rules); i++) {
+		json_object *rule = json_object_array_get_idx(rules, i);
 		addRule(rule, positionDepart + i);
 	}
 }
 /**
- * Insert la regle rule a la position "position" ou à la fin si la position est superieur au nb de regle
+ * Insert la regle rule a la position "position" ou à la fin si la position est superieur au nb de regle (dont free rule succed
  */
-int addRule(json_t * rule, int position) {
+int addRule(json_object * rule, int position) { //TODO use position
 	int added = checkRuleCoherence(rule);
-	if (added != TRUE){
+	if (added != TRUE) {
 		return FALSE;
 	}
-
+	const char * ruleName = json_object_get_string(
+						json_object_object_get(rule, "ruleName"));
 	if ((int) getRuleByName(
-					json_string_value(
-							json_object_get(rule, "ruleName"))) == FALSE) {
-		if (json_array_insert(root, position, rule) == FALSE) {
-			json_array_append_new(root, rule);
-		} else {
-			json_array_clear(rule);
-		}
-	}else{
-		sendLog(DEBUG,"Rule Incoherence: name already in use %s",json_string_value(json_object_get(rule, "ruleName")));
-		json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "name_already_in_use");
-		char * msg = json_dumps(errorMsg, 0);
-		sendNetMsg(REST,strlen(msg),msg);
+			ruleName) == FALSE) {
+		json_object_array_add(root, rule);
+	} else {
+		sendLog(DEBUG, "Rule Incoherence: name already in use %s",
+				ruleName);
+		json_object * errorMsg = json_object_new_object();
+		json_object_object_add(errorMsg, "msgType",
+				json_object_new_string("R_newRule"));
+		json_object_object_add(errorMsg, "status",
+				json_object_new_string("REFUSED"));
+		json_object_object_add(errorMsg, "error",
+				json_object_new_string("name_already_in_use"));
+
+		char * msg = (char *) json_object_to_json_string(errorMsg);
+		sendNetMsg(REST, strlen(msg), msg);
+		//free(msg);
 		return FALSE;
 	}
 
-
-	return added;
+	saveRules("RULES_STATUS.json");
+	return TRUE;
 }
 
-json_t * convertToJson(char * string) {
-	json_t * jsonString;
-	json_error_t error;
-	jsonString = json_loads(string, 0, &error);
+json_object * convertToJson(char * string) {
+	json_object * jsonString;
+	jsonString = json_tokener_parse(string);
 
 	if (!jsonString) {
-		sendLog(DEBUG,"Invalid JSON msg: on line %d: %s at position:%d",error.line, error.text, error.position);
-		return (json_t *)FALSE;
+		sendLog(DEBUG, "Invalid JSON msg");
+		return (json_object *) FALSE;
 	}
 	return jsonString;
 }
 
 int removeRuleByName(char * name) {
-	json_t *rule;
+	json_object *rule;
 
 	rule = getRuleByName(name);
-	if (!json_is_null(rule)) {
+	if (rule != NULL) {
 		return removeRule(rule);
 	}
 	return TRUE;
 }
 
 int removeRuleByIndex(size_t index) {
-	return json_array_remove(root, (size_t) index);
+//TODO Tester
+	json_object_put((json_object_array_get_idx(root, (size_t) index)));
+
+	return TRUE;
 }
 
-int removeRule(json_t *ruleToRemove) {
+int removeRule(json_object *ruleToRemove) {
 	int i;
-	for (i = 0; i < json_array_size(root); i++) {
-		json_t *rule = json_array_get(root, i);
+	for (i = 0; i < json_object_array_length(root); i++) {
+		json_object *rule = json_object_array_get_idx(root, i);
 		if (rule == ruleToRemove) {
 			return removeRuleByIndex(i);
 		}
@@ -102,57 +112,55 @@ int removeRule(json_t *ruleToRemove) {
 
 int checkMainRulesCoherence() {
 	int i;
-	for (i = 0; i < json_array_size(root); i++) {
-		json_t *rule = json_array_get(root, i);
+	for (i = 0; i < json_object_array_length(root); i++) {
+		json_object *rule = json_object_array_get_idx(root, i);
 
 		if (checkRuleCoherence(rule) == FALSE) {
-			sendLog(DEBUG,"Rule: %s removed",
-					json_string_value(json_object_get(rule, "ruleName")));
+			sendLog(DEBUG, "Rule: %s removed",
+					json_object_get_string(json_object_object_get(rule, "ruleName")));
 			removeRuleByIndex(i);
 		}
 	}
 	return TRUE;
 }
 
-json_t * getRuleByName(const char * name) {
+json_object * getRuleByName(const char * name) {
 	int i;
 	const char * currentRuleName;
 	if (name != NULL) {
-		for (i = 0; i < json_array_size(root); i++) {
-			json_t *rule = json_array_get(root, i);
-			currentRuleName = json_string_value(
-					json_object_get(rule, "ruleName"));
+		for (i = 0; i < json_object_array_length(root); i++) {
+			json_object *rule = json_object_array_get_idx(root, i);
+			currentRuleName = json_object_get_string(json_object_object_get(rule, "ruleName"));
 
 			if (strcmp(name, currentRuleName) == 0) {
 				return rule;
 			}
 		}
 	}
-	return (json_t *) FALSE;
+	return (json_object *) FALSE;
 }
 
-int checkRuleCoherence(json_t * rule) {
+int checkRuleCoherence(json_object * rule) {
 
-	json_t * conditions = json_object_get(rule, "conditions");
+	json_object * conditions = json_object_object_get(rule, "conditions");
 	if (conditions != NULL) {
 		int i = 0;
-		for (i = 0; i < json_array_size(conditions); i++) {
-			json_t *condition = json_array_get(conditions, i);
-			json_t *conditionType = json_object_get(condition, "type");
+		for (i = 0; i < json_object_array_length(conditions); i++) {
+			json_object *condition = json_object_array_get_idx(conditions, i);
+			json_object *conditionType = json_object_object_get(condition,
+					"type");
 
-			if (!json_is_null(conditionType)) {
+			if (conditionType != NULL) {
 				const char * operande[2];
 				const char * date;
-				const char * type = json_string_value(conditionType);
+				const char * type = json_object_get_string(conditionType);
 
 				switch (getOperator(type)) {
 				case SUP:
 				case INF:
 				case EQU:
-					operande[0] = json_string_value(
-							json_object_get(condition, "leftOp"));
-					operande[1] = json_string_value(
-							json_object_get(condition, "rightOp"));
+					operande[0] = json_object_get_string(json_object_object_get(condition, "leftOp"));
+					operande[1] = json_object_get_string(json_object_object_get(condition, "rightOp"));
 					int i = 0;
 
 					if (operande[0] != NULL && operande[1] != NULL) {
@@ -167,11 +175,26 @@ int checkRuleCoherence(json_t * rule) {
 								//On cherche si le capteur existe en memoire
 								if (getMemDevice(atoi(idCaptor))
 										== (struct DEVICE *) -1) {
-									sendLog(DEBUG, "Rule Incoherence: sensor:%s inexistant",idCaptor);
-									json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:i}","msgType", "R_newRule","status", "REFUSED","error", "ID","cause", idCaptor);
-									char * msg = json_dumps(errorMsg, 0);
-									sendNetMsg(REST,strlen(msg),msg);
-									free(msg);
+									sendLog(
+											DEBUG,
+											"Rule Incoherence: sensor:%s inexistant",
+											idCaptor);
+									json_object * errorMsg =
+											json_object_new_object();
+
+									json_object_object_add(errorMsg, "msgType",
+											json_object_new_string("R_newRule"));
+									json_object_object_add(errorMsg, "status",
+											json_object_new_string("REFUSED"));
+									json_object_object_add(errorMsg, "error",
+											json_object_new_string("ID"));
+									json_object_object_add(errorMsg, "cause",
+											json_object_new_string(idCaptor));
+
+									char * msg = (char *) json_object_to_json_string(errorMsg);
+									sendNetMsg(REST, strlen(msg), msg);
+									//free(msg);
+									json_object_put(errorMsg);
 
 									return FALSE;
 								}
@@ -181,10 +204,18 @@ int checkRuleCoherence(json_t * rule) {
 					} else {
 						//Operande manquante
 						sendLog(DEBUG, "Rule Incoherence: operande missing");
-						json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "operande_missing");
-						char * msg = json_dumps(errorMsg, 0);
-						sendNetMsg(REST,strlen(msg),msg);
-						free(msg);
+						json_object * errorMsg = json_object_new_object();
+
+						json_object_object_add(errorMsg, "msgType",
+								json_object_new_string("R_newRule"));
+						json_object_object_add(errorMsg, "status", json_object_new_string("REFUSED"));
+						json_object_object_add(errorMsg, "error",
+								json_object_new_string("operande_missing"));
+
+						char * msg = (char *) json_object_to_json_string(errorMsg);
+						sendNetMsg(REST, strlen(msg), msg);
+						//free(msg);
+						json_object_put(errorMsg);
 						return FALSE;
 					}
 
@@ -192,24 +223,38 @@ int checkRuleCoherence(json_t * rule) {
 				case SUP_DATE:
 				case INF_DATE:
 				case EQU_DATE:
-					date = json_string_value(
-							json_object_get(condition, "date"));
+					date = json_object_get_string(json_object_object_get(condition, "date"));
 					if (date == NULL) {
 						//Operande manquante
 						sendLog(DEBUG, "Rule Incoherence: date missing");
-						json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "date_missing");
-						char * msg = json_dumps(errorMsg, 0);
-						sendNetMsg(REST,strlen(msg),msg);
-						free(msg);
+						json_object * errorMsg = json_object_new_object();
+
+						json_object_object_add(errorMsg, "msgType",
+								json_object_new_string("R_newRule"));
+						json_object_object_add(errorMsg, "status", json_object_new_string("REFUSED"));
+						json_object_object_add(errorMsg, "error",
+								json_object_new_string("date_missing"));
+
+						char * msg =  (char *) json_object_to_json_string(errorMsg);
+						sendNetMsg(REST, strlen(msg), msg);
+						//free(msg);
+						json_object_put(errorMsg);
 						return FALSE;
 					}
 					break;
 				case UNKNOWN:
 					sendLog(DEBUG, "Rule Incoherence: operation type unknown");
-					json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "operation_type_unknown");
-					char * msg = json_dumps(errorMsg, 0);
-					sendNetMsg(REST,strlen(msg),msg);
-					free(msg);
+
+					json_object * errorMsg = json_object_new_object();
+					json_object_object_add(errorMsg, "msgType", json_object_new_string("R_newRule"));
+					json_object_object_add(errorMsg, "status", json_object_new_string("REFUSED"));
+					json_object_object_add(errorMsg, "error",
+							json_object_new_string("operation_type_unknown"));
+
+					char * msg =  (char *) json_object_to_json_string(errorMsg);
+					sendNetMsg(REST, strlen(msg), msg);
+					//free(msg);
+					json_object_put(errorMsg);
 					return FALSE;
 					break;
 				default:
@@ -219,38 +264,59 @@ int checkRuleCoherence(json_t * rule) {
 			} else {
 				//Aucune condition
 				sendLog(DEBUG, "Rule Incoherence: condition missing");
-				json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "condition_missing");
-				char * msg = json_dumps(errorMsg, 0);
-				sendNetMsg(REST,strlen(msg),msg);
+
+				json_object * errorMsg = json_object_new_object();
+				json_object_object_add(errorMsg, "msgType", json_object_new_string("R_newRule"));
+				json_object_object_add(errorMsg, "status", json_object_new_string("REFUSED"));
+				json_object_object_add(errorMsg, "error", json_object_new_string("condition_missing"));
+
+				char * msg =  (char *) json_object_to_json_string(errorMsg);
+				sendNetMsg(REST, strlen(msg), msg);
+				//free(msg);
+				json_object_put(errorMsg);
+
 				return FALSE;
 			}
 
 		}
 	}
-	json_t * actions = json_object_get(rule, "actions");
+	json_object * actions = json_object_object_get(rule, "actions");
 	if (actions != NULL) {
 		int i = 0;
-		for (i = 0; i < json_array_size(actions); i++) {
-			json_t *action = json_array_get(actions, i);
-			json_t *actuator = json_object_get(action, "actuator");
+		for (i = 0; i < json_object_array_length(actions); i++) {
+			json_object *action = json_object_array_get_idx(actions, i);
+			json_object *actuator = json_object_object_get(action, "actuator");
 			if (actuator != NULL
-					&& (int) getMemDevice(
-							atoi(json_string_value(actuator))) != FALSE) {
+					&& (int) getMemDevice(atoi(json_object_get_string(actuator))) != FALSE) {
 			} else {
-				sendLog(DEBUG,"Rule Incoherence: actuator %d missing",
-						atoi(json_string_value(actuator)));
-				json_t * errorMsg= json_pack("{s:s, s:s, s:s, s:i}","msgType", "R_newRule","status", "REFUSED","error", "ID","cause", atoi(json_string_value(actuator)));
-				char * msg = json_dumps(errorMsg, 0);
-				sendNetMsg(REST,strlen(msg),msg);
-				free(msg);
+				sendLog(DEBUG, "Rule Incoherence: actuator %d missing",
+						atoi(json_object_get_string(actuator)));
+
+				json_object * errorMsg = json_object_new_object();
+				json_object_object_add(errorMsg, "msgType", json_object_new_string("R_newRule"));
+				json_object_object_add(errorMsg, "status", json_object_new_string("REFUSED"));
+				json_object_object_add(errorMsg, "error", json_object_new_string("ID"));
+				json_object_object_add(errorMsg, "cause", json_object_new_string(json_object_get_string(actuator)));
+
+				char * msg =  (char *) json_object_to_json_string(errorMsg);
+				sendNetMsg(REST, strlen(msg), msg);
+				//free(msg);
+				json_object_put(errorMsg);
+
 				return FALSE;
 			}
 		}
-	}else{
-		sendLog(DEBUG,"Rule Incoherence: no actions");
-		json_t * errorMsg= json_pack("{s:s, s:s, s:s}","msgType", "R_newRule","status", "REFUSED","error", "no_actions");
-		char * msg = json_dumps(errorMsg, 0);
-		sendNetMsg(REST,strlen(msg),msg);
+	} else {
+		sendLog(DEBUG, "Rule Incoherence: no actions");
+		json_object * errorMsg = json_object_new_object();
+		json_object_object_add(errorMsg, "msgType", json_object_new_string("R_newRule"));
+		json_object_object_add(errorMsg, "status", json_object_new_string("REFUSED"));
+		json_object_object_add(errorMsg, "error", json_object_new_string("no_actions"));
+
+		char * msg =  (char *) json_object_to_json_string(errorMsg);
+		sendNetMsg(REST, strlen(msg), msg);
+		//free(msg);
+		json_object_put(errorMsg);
 		return FALSE;
 	}
 
@@ -258,13 +324,15 @@ int checkRuleCoherence(json_t * rule) {
 }
 
 int saveRules(char * fileName) {
-	FILE * pFile;
+	/*FILE * pFile;
 	pFile = fopen(fileName, "w");
 	if (pFile == NULL) {
 		return -1;
 	}
-	json_dumpf(root, pFile, JSON_INDENT(3) | JSON_PRESERVE_ORDER);
-	fclose(pFile);
+	const char * rootStatus = json_object_to_json_string(root);
+	fprintf(pFile, "%s\n", rootStatus);
+	fclose(pFile);*/
+	json_object_to_file(fileName,root);
 	return TRUE;
 }
 
@@ -287,19 +355,19 @@ enum OPERATION_TYPE getOperator(const char * balise) {
 	return operator;
 }
 
-int checkCondition(json_t * condition) {
-	json_t *conditionType = json_object_get(condition, "type");
+int checkCondition(json_object * condition) {
+	json_object *conditionType = json_object_object_get(condition, "type");
 	const char * operande[2];
 	const char * date;
 	int values[2];
-	const char * type = json_string_value(conditionType);
+	const char * type = json_object_get_string(conditionType);
 
 	switch (getOperator(type)) {
 	case SUP:
 	case INF:
 	case EQU:
-		operande[0] = json_string_value(json_object_get(condition, "leftOp"));
-		operande[1] = json_string_value(json_object_get(condition, "rightOp"));
+		operande[0] = json_object_get_string(json_object_object_get(condition, "leftOp"));
+		operande[1] = json_object_get_string(json_object_object_get(condition, "rightOp"));
 		int i = 0;
 
 		for (; i < 2; i++) {
@@ -337,7 +405,7 @@ int checkCondition(json_t * condition) {
 	case SUP_DATE:
 	case INF_DATE:
 	case EQU_DATE:
-		date = json_string_value(json_object_get(condition, "date"));
+		date = json_object_get_string(json_object_object_get(condition, "date"));
 		int heure;
 		int minute;
 		sscanf(date, "%d:%d", &heure, &minute);
@@ -379,36 +447,38 @@ int checkCondition(json_t * condition) {
 
 }
 
-int doActions(json_t * action) {
-	json_t * actuator = json_object_get(action, "actuator");
-	json_t * value = json_object_get(action, "value");
+int doActions(json_object * action) {
+	json_object * actuator = json_object_object_get(action, "actuator");
+	json_object * value = json_object_object_get(action, "value");
+	const char * actuatorName = json_object_get_string(actuator);
+	const char * actuatorValue = json_object_get_string(value);
 
-	if (updateActuator(atoi(json_string_value(actuator))) == TRUE) {
-		setValue(atoi(json_string_value(actuator)),
-				(int) atoi(json_string_value(value)));
+	if (updateActuator(atoi(actuatorName)) == TRUE) {
+
+		sendLog(DEBUG, "(TODO) Request to set actuator: %s to %s",actuatorName,actuatorValue);
 		return TRUE;
 	}
 	return FALSE;
 }
 
-int checkRule(json_t * rule) {
-	json_t * conditions = json_object_get(rule, "conditions");
+int checkRule(json_object * rule) {
+	json_object * conditions = json_object_object_get(rule, "conditions");
 	int i = 0;
 
-	for (i = 0; i < json_array_size(conditions); i++) {
-		json_t *condition = json_array_get(conditions, i);
+	for (i = 0; i < json_object_array_length(conditions); i++) {
+		json_object *condition = json_object_array_get_idx(conditions, i);
 		if (checkCondition(condition) != TRUE) {
 			return FALSE;
 		}
 	}
 	int j = 0;
-	json_t * actions = json_object_get(rule, "actions");
-	for (j = 0; j < json_array_size(actions); j++) {
-		json_t *action = json_array_get(actions, j);
+	json_object * actions = json_object_object_get(rule, "actions");
+	for (j = 0; j < json_object_array_length(actions); j++) {
+		json_object *action = json_object_array_get_idx(actions, j);
 		if (doActions(action) != FALSE) {
 			//Si la demande de l'action a été effectuée
-			sendLog(DEBUG,"Regle validee: %s",
-					json_string_value(json_object_get(rule, "ruleName")));
+			sendLog(DEBUG, "Regle validee: %s",
+					json_object_get_string(json_object_object_get(rule, "ruleName")));
 		}
 	}
 	return TRUE;
@@ -416,8 +486,8 @@ int checkRule(json_t * rule) {
 void checkRules() {
 	int i;
 	lastIndexUpdated = 0;
-	for (i = 0; i < json_array_size(root); i++) {
-		json_t *rule = json_array_get(root, i);
+	for (i = 0; i < json_object_array_length(root); i++) {
+		json_object *rule = json_object_array_get_idx(root, i);
 		checkRule(rule);
 	}
 }

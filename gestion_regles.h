@@ -8,14 +8,12 @@
 #define GESTION_REGLES_H_
 
 #include <string.h>
-#include <jansson.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
 #include "gestion_capteurs.h"
 #include "mere.h"
-
-#define TRUE 0
-#define FALSE -1
+#include "json/json.h"
 
 
 enum OPERATION_TYPE {
@@ -23,20 +21,21 @@ enum OPERATION_TYPE {
 };
 
 enum REQUEST_TYPE {
-	NEW_RULE,UNKNOWN_REQUEST
+	NEW_RULE,UNKNOWN_REQUEST, GET_ALL_DEVICES, GET_DEVICE
 };
 
-json_t *root;
+typedef struct json_object json_object;
+json_object *root;
 /*
  * Initialise les regles internes a partir du Json passé en parametre.
  * Si il est nul, aucune regle n'est ajouté
  */
-void initMainRules(json_t *);
+void initMainRules(json_object *);
 
 /*
  * Renvoie FALSE si un capteur inexistant est present dans la regle, TRUE Sinon.
  */
-int checkRuleCoherence(json_t * rule);
+int checkRuleCoherence(json_object * rule);
 
 /*
  * Supprime toutes les regles internes qui utilisent au moins un capteur inexistant.
@@ -46,9 +45,9 @@ int checkMainRulesCoherence();
 /*
  * Ajout la regle a position dans les regles internes si elle est valide (capteur existants et nom inutilisé)
  */
-int addRule(json_t *regle, int position);
+int addRule(json_object *regle, int position);
 
-void addRules (json_t * rules,int positionDepart);
+void addRules (json_object * rules,int positionDepart);
 /*
  * Ajout les regles a partir de position dans les regles internes si elles sont valides (capteur existants et nom inutilisé)
  */
@@ -65,13 +64,14 @@ int removeRuleByName(char * name);
 int removeRuleByIndex(size_t index);
 
 /*
- * Test toutes les regle, si leur conditions sont validees alors les actions associées sont effectué
+ * Test toutes les regles, si leur conditions sont validees alors les actions associées sont effectué
  * Aucun controle des regles n'est effectue dans cette fonction.
- * Un actionneur ne peut etre modifie qu'une seule fois
+ * Un actionneur ne peut etre modifie qu'une seule fois par check
  */
 void checkRules();
 
-json_t * convertToJson(char * string);
+json_object * convertToJson(char * string);
 
 #endif /* GESTION_REGLES_H_ */
+
 

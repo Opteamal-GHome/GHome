@@ -21,6 +21,14 @@ struct DEVICE * getMemDevice(int id){
 	return sensor;
 }
 
+struct DEVICE * getMemDeviceByIndex(int index){
+	struct DEVICE* sensor = (struct DEVICE*) NULL;
+	if(index < 4 && index >= 0){ //TODO CHANGER!!!
+		sensor = &sensors[index];
+	}
+	return sensor;
+}
+
 void removeMemDevice(id){
 	struct DEVICE* sensor;
 	sensor = getMemDevice(id);
@@ -43,21 +51,29 @@ void initTestMemory(){
   memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
 	sensors[0].id = 10;
 	sensors[0].type = 'S';
+	sensors[0].role = 'T';
 	sensors[0].value = 42;
 
 	sensors[1].id = 11;
 	sensors[1].type = 'S';
+	sensors[1].role = 'T';
 	sensors[1].value = 35;
 
 	sensors[2].id = 12;
 	sensors[2].type = 'S';
+	sensors[2].role = 'H';
 	sensors[2].value = 42;
 
 	sensors[3].id = 20;
 	sensors[3].type = 'A';
+	sensors[3].role = 'I';
 	sensors[3].value = 42;
 
 	sensors[4].id = 21;
 	sensors[4].type = 'A';
+	sensors[4].role = 'I';
 	sensors[4].value = 42;
 }
+
+
+

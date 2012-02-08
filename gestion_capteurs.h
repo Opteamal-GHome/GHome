@@ -10,22 +10,28 @@
 
 #define NB_SENSORS 10
 #define ID_SENSORS_SIZE 8
-#define TRUE 0
-#define FALSE -1
 
-struct DEVICE{ //Structure memoire
+#undef FALSE
+#define FALSE 0
+
+#undef TRUE
+#define TRUE 1
+
+struct DEVICE { //Structure memoire
 	int id;
 	int value;
 	char type;
-	unsigned long long timestamp;
 	char role;
+	unsigned int timestamp;
 };
 
-struct DEVICE sensors[NB_SENSORS];//Pr modeliser la memoire
+struct DEVICE sensors[NB_SENSORS]; //Pr modeliser la memoire
 
 struct DEVICE * getMemDevice(int id);
 void initTestMemory();
 void removeMemDevice(int);
 int setValue(int id, int value);
+struct DEVICE * getMemDeviceByIndex(int index);
 
 #endif /* GESTION_CAPTEURS_H_ */
+
