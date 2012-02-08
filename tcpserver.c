@@ -142,9 +142,10 @@ void closeClient(int clientSock){
   shutdown(clientSock, SHUT_RDWR);
 	close(clientSock);
 }
-int receive(int socket, void * buff, int size){
+int receive(int socket, char * buff, int size){
   size_t ret = 0;
   size_t bytesRcv = 0;
+  int i=0;
   for (bytesRcv=0; bytesRcv<size; ){
     ret=recv(socket,(void*)(buff+bytesRcv),size-ret,0);
     bytesRcv+=ret;
@@ -156,6 +157,9 @@ int receive(int socket, void * buff, int size){
       return -1;
     }else{
       sendLog(DEBUG,"Received %d bytes.",ret);
+      for (i=0; i<ret; i++){
+        sendLog(DEBUG,"%hhx ",buff[i]);
+      }
     }
   }
   return ret;
