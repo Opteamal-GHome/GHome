@@ -192,6 +192,9 @@ int main(int argc, char * argv[]) {
   sigaction(SIGINT,&act,NULL);
   sigaction(SIGTERM,&act,NULL);
 
+  //Make the device's structure content safe
+  initMemory();
+
   //create log mailbox :
 	if(mq_unlink(MQ_LOG_NAME)){
     logErr(DEBUG,"mq_unlink log",errno);
@@ -281,5 +284,6 @@ int main(int argc, char * argv[]) {
   logMsg(DEBUG,"Closing file descriptors");
   exit(0);
 }
+
 
 

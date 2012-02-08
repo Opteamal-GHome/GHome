@@ -108,6 +108,7 @@ int requestTreatment(char *requestRule) {
 			case NEW_RULE:
 				sendLog(DEBUG, "restServer New Rule Request");
 				if (newRuleRequest(requestJson) == TRUE) {
+					sem_post(&sem);
 					return TRUE;
 				}
 				break;

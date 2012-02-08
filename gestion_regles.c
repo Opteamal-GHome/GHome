@@ -19,7 +19,7 @@ int removeRule(json_object *ruleToRemove);
 int checkRule(json_object * rule);
 int checkCondition(json_object * condition);
 int updateActuator(int id);
-int doActions(json_object * action);
+int doAction(json_object * action);
 
 void initMainRules(json_object * initSource) {
 
@@ -447,15 +447,15 @@ int checkCondition(json_object * condition) {
 
 }
 
-int doActions(json_object * action) {
+int doAction(json_object * action) {
 	json_object * actuator = json_object_object_get(action, "actuator");
 	json_object * value = json_object_object_get(action, "value");
 	const char * actuatorName = json_object_get_string(actuator);
 	const char * actuatorValue = json_object_get_string(value);
 
 	if (updateActuator(atoi(actuatorName)) == TRUE) {
-
 		sendLog(DEBUG, "(TODO) Request to set actuator: %s to %s",actuatorName,actuatorValue);
+		//TODO send msg to pilote
 		return TRUE;
 	}
 	return FALSE;
@@ -475,9 +475,9 @@ int checkRule(json_object * rule) {
 	json_object * actions = json_object_object_get(rule, "actions");
 	for (j = 0; j < json_object_array_length(actions); j++) {
 		json_object *action = json_object_array_get_idx(actions, j);
-		if (doActions(action) != FALSE) {
+		if (doAction(action) != FALSE) {
 			//Si la demande de l'action a été effectuée
-			sendLog(DEBUG, "Regle validee: %s",
+			sendLog(DEBUG, "Engine Rule: %s activated",
 					json_object_get_string(json_object_object_get(rule, "ruleName")));
 		}
 	}
@@ -504,5 +504,6 @@ int updateActuator(int id) {
 	lastIndexUpdated++;
 	return TRUE;
 }
+
 
 

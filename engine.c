@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include "mere.h"
+#include "gestion_regles.h"
 
 void * startEngine(void * args){
   sigset_t set;
@@ -20,8 +21,11 @@ void * startEngine(void * args){
   //wait for the semaphore :
   for (;;){
     sem_wait(&sem);
-    //For test purposes (a sem_post is done on every sensor activity in sensorServer): 
-    sendLog(DEBUG,"semaphore received");
+    //For test purposes (a sem_post is done on every sensor activity in sensorServer):
+    sendLog(DEBUG,"Engine: checking rules");
+    checkRules();
+    sendLog(DEBUG,"Engine: rules checked");
   }
 }
  
+
