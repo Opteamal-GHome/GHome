@@ -17,6 +17,7 @@ struct DEVICE{ //Structure memoire
 	int id;
 	int value;
 	char type;
+	char role;
 	unsigned int timestamp;
 };
 
