@@ -34,7 +34,7 @@ void * startRestRcv(void * args) {
 	//there must be some other way to achieve this.
 
 	socketRestClient = 0;
-	sendLog(DEBUG, "rest reception thread started");
+	sendLog(DEBUG, "restServer reception thread started");
 	socketServer = initServer(listen_port);
 	if (socketServer == -1) {
 		return NULL;
@@ -47,7 +47,7 @@ void * startRestRcv(void * args) {
 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
-	for (;;) { //TODO no always disconnect the client
+	for (; socketRestClient != -1;) { //TODO no always disconnect the client
 		int msgLength = 0;
 		int msgLengthReceived = 0;
 		int lengthSizeReceived = 0;
@@ -59,27 +59,34 @@ void * startRestRcv(void * args) {
 		}
 		sendLog(LOG, "restServer connected");
 
-		//Get a JSON request
-		lengthSizeReceived = receive(socketRestClient, &msgLength,
-				sizeof(msgLength));
-		if (lengthSizeReceived == sizeof(msgLength)) {
-			JSONRequest = malloc(sizeof(char) * (msgLength + 1));
-			msgLengthReceived = receive(socketRestClient, JSONRequest,
-					msgLength);
-			JSONRequest[msgLength] = '\0';
-		}
+		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
-		// Treat the JSON request
-		if (JSONRequest != (char*) NULL && msgLengthReceived == msgLength) {
-			//sendLog(DEBUG, "Request : %s", JSONRequest);
-			int success = requestTreatment(JSONRequest);
+			//Get a JSON request
+			lengthSizeReceived = receive(socketRestClient, &msgLength,
+					sizeof(msgLength));
+			if (lengthSizeReceived == sizeof(msgLength)) {
+				JSONRequest = malloc(sizeof(char) * (msgLength + 1));
+				msgLengthReceived = receive(socketRestClient, JSONRequest,
+						msgLength);
+				JSONRequest[msgLength] = '\0';
+				if (msgLengthReceived != 0) {
+					// Treat the JSON request
+					if (JSONRequest != (char*) NULL
+							&& msgLengthReceived == msgLength) {
+						//sendLog(DEBUG, "Request : %s", JSONRequest);
+						int success = requestTreatment(JSONRequest);
 
-			if (success == TRUE) {
-				sendLog(DEBUG, "Request done");
-			} else {
-				sendLog(DEBUG, "Request ignored");
+						if (success == TRUE) {
+							sendLog(DEBUG, "restServer request done");
+						} else {
+							sendLog(DEBUG, "restServer request ignored");
+						}
+
+					}
+				}
+				free(JSONRequest);
+
 			}
-			free(JSONRequest);
 		}
 
 		sendLog(LOG, "restServer deconected");
@@ -99,11 +106,13 @@ int requestTreatment(char *requestRule) {
 
 			switch (getRequestType(type)) {
 			case NEW_RULE:
+				sendLog(DEBUG, "restServer New Rule Request");
 				if (newRuleRequest(requestJson) == TRUE) {
 					return TRUE;
 				}
 				break;
 			case GET_ALL_DEVICES:
+				sendLog(DEBUG, "restServer Get All Device Request");
 				sendAllDevices();
 				json_object_put(requestJson);
 				return TRUE;
@@ -133,7 +142,6 @@ int newRuleRequest(json_object * requestJson) {
 	int priority;
 	json_object * rule;
 
-	sendLog(DEBUG, "New Rule Request");
 	priority = atoi(
 			json_object_get_string(
 					json_object_object_get(requestJson, "priority")));
@@ -376,4 +384,5 @@ char * transformCharToString(char a) {
  return (char*) FALSE;
  }
  */
+
 
