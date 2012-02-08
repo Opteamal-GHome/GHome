@@ -228,14 +228,14 @@ void sendAllDevices() {
 
 int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg) {
 	json_object * msg = json_object_new_object();
-	//role == type (rest)
+	//type == type (rest)
 
-	if (device->type == 'S') {
+	if (device->role == 'S') {
 		//Sensor
 		json_object * sensorsArray = json_object_object_get(rootMsg, "sensors");
 		json_object_array_add(sensorsArray, msg);
 
-		char * role = transformCharToString(device->role);
+		char * type = transformCharToString(device->type);
 
 		char idChar[6];
 		sprintf(idChar, "%d", device->id);
@@ -243,20 +243,20 @@ int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg) {
 		sprintf(deviceValue, "%d", device->value);
 
 		json_object_object_add(msg, "id", json_object_new_string(idChar));
-		json_object_object_add(msg, "type", json_object_new_string(role));
+		json_object_object_add(msg, "type", json_object_new_string(type));
 		json_object_object_add(msg, "data",
 				json_object_new_string(deviceValue));
 
-	} else if (device->type == 'A') {
+	} else if (device->role == 'A') {
 		//Actuator
 		char idChar[6];
 		sprintf(idChar, "%d", device->id);
 		char deviceValue[6];
 		sprintf(deviceValue, "%d", device->value);
-		char * role = transformCharToString(device->role);
+		char * type = transformCharToString(device->type);
 
 		json_object_object_add(msg, "id", json_object_new_string(idChar));
-		json_object_object_add(msg, "type", json_object_new_string(role));
+		json_object_object_add(msg, "type", json_object_new_string(type));
 		json_object_object_add(msg, "data",
 				json_object_new_string(deviceValue));
 

@@ -23,7 +23,7 @@ struct DEVICE * getMemDevice(int id){
 
 struct DEVICE * getMemDeviceByIndex(int index){
 	struct DEVICE* sensor = (struct DEVICE*) NULL;
-	if(index < 4 && index >= 0){ //TODO CHANGER!!!
+	if(index < NB_SENSORS && index >= 0 && sensors[index].id != 0){
 		sensor = &sensors[index];
 	}
 	return sensor;
@@ -39,41 +39,45 @@ void removeMemDevice(id){
 }
 
 int setValue(int id, int value){
-	if(id < NB_SENSORS){
+	if(id < NB_SENSORS && sensors[id].id != 0){
 		sensors[id].value = value;
 	}else{
 		return FALSE;
 	}
 	return TRUE;
 }
+void initMemory(){
+	memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
+}
 
 void initTestMemory(){
   memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
 	sensors[0].id = 10;
-	sensors[0].type = 'S';
-	sensors[0].role = 'T';
+	sensors[0].role = 'S';
+	sensors[0].type = 'T';
 	sensors[0].value = 42;
 
 	sensors[1].id = 11;
-	sensors[1].type = 'S';
-	sensors[1].role = 'T';
+	sensors[1].role = 'S';
+	sensors[1].type = 'T';
 	sensors[1].value = 35;
 
 	sensors[2].id = 12;
-	sensors[2].type = 'S';
-	sensors[2].role = 'H';
+	sensors[2].role = 'S';
+	sensors[2].type = 'H';
 	sensors[2].value = 42;
 
 	sensors[3].id = 20;
-	sensors[3].type = 'A';
-	sensors[3].role = 'I';
+	sensors[3].role = 'A';
+	sensors[3].type = 'I';
 	sensors[3].value = 42;
 
 	sensors[4].id = 21;
-	sensors[4].type = 'A';
-	sensors[4].role = 'I';
+	sensors[4].role = 'A';
+	sensors[4].type = 'I';
 	sensors[4].value = 42;
 }
+
 
 
 

@@ -21,17 +21,19 @@ struct DEVICE { //Structure memoire
 	int id;
 	int value;
 	char type;
-	char role;
+	char role; // actuator or sensor, (ce champ va suremment disparaitre)
 	unsigned int timestamp;
 };
 
-struct DEVICE sensors[NB_SENSORS]; //Pr modeliser la memoire
+struct DEVICE sensors[NB_SENSORS];
 
 struct DEVICE * getMemDevice(int id);
-void initTestMemory();
+void initMemory();
 void removeMemDevice(int);
 int setValue(int id, int value);
 struct DEVICE * getMemDeviceByIndex(int index);
+void initTestMemory();
 
 #endif /* GESTION_CAPTEURS_H_ */
+
 
