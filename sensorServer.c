@@ -3,6 +3,8 @@
 #include "mere.h"
 #include "tcpserver.h"
 #include "gestion_capteurs.h"
+#include <endian.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -25,6 +27,22 @@ struct oData {
   int data; 
 };
 
+int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata){
+  char buff[20];
+  uint64_t timestamp;
+  int sensorId;
+  int data;
+  sendLog(DEBUG,"Sending O Frame");
+  timestamp=htobe64(stimestamp);
+  sensorId=htobe32(ssensorId);
+  data=htobe32(sdata);
+  memcpy(buff,&timestamp,sizeof(long long));
+  buff[sizeof(long long)]='O';
+  memcpy(&buff[9],&sensorId,sizeof(int));
+  memcpy(buff+sizeof(long long)+1+sizeof(int),&data,sizeof(int));
+  sendNetMsg(SENSORS,17,buff);
+  return 0;
+}
 static void getSData(unsigned long long timestamp){
   //This frames are used to create or remove sensors, let's do that :
   struct sData received;
@@ -37,6 +55,7 @@ static void getSData(unsigned long long timestamp){
   received.infoType=data[0];
   memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
   received.sensorType=data[5];
+  received.sensorId=be32toh(received.sensorId);
   sendLog(DEBUG,"\ninfo type : '%c', sensor ID : %x, sensor type : '%c'",\
       received.infoType, received.sensorId, received.sensorType);
   switch (received.infoType){
@@ -47,6 +66,7 @@ static void getSData(unsigned long long timestamp){
         sensors[i].id=received.sensorId;
         sensors[i].type=received.sensorType;
         sensors[i].timestamp=timestamp;
+        sem_post(&sem);
         return; 
       }
     }
@@ -63,6 +83,8 @@ static void getSData(unsigned long long timestamp){
 static void getOData(){
   struct oData received;
   receive(socketSensorClient, (void *)&received, 8);
+  received.sensorId=be32toh(received.sensorId);
+  received.data=be32toh(received.data);
   sendLog(DEBUG,"sensor ID : %d, sensor value : %d",\
       received.sensorId, received.data);
   setValue(received.sensorId, received.data);
@@ -97,6 +119,7 @@ void * startSensorServer(void * args){
       return NULL;
     }
     sendLog(LOG, "Sensors client connected");
+    sendOFrame(4142,1234,1337);
     for (ret=0; ret!=-1;){
       //Each frame is cut in 3 pieces, timestamp, type and data
       //The first two pieces have a fixed size of 9 bytes, let's get those.
@@ -105,9 +128,10 @@ void * startSensorServer(void * args){
       //sruct frame because of its definition : 
       // - int 4 bytes, 
       // - char 1 byte + 3 discarded bytes.
+      // Convert into little endian :
+      received.timestamp=be64toh(received.timestamp);
       sendLog(DEBUG,"Received new frame,\n\ttimestamp : %llu,\n\ttype : '%c',",\
           received.timestamp, received.type);
-      sem_post(&sem);
       switch (received.type) {
         case 'S' :
           getSData(received.timestamp);
