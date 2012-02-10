@@ -18,7 +18,7 @@
 #include "tcpserver.h"
 #include "gestion_regles.h"
 
-#define listen_port 4433
+#define listen_port 80
 #define MAX_MSG_LENGTH 500
 
 /*
