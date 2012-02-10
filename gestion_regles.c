@@ -70,6 +70,25 @@ int addRule(json_object * rule, int position) { //TODO use position
 	saveRules("RULES_STATUS.json");
 	return TRUE;
 }
+//TODO
+void insertRuleIntoArray(json_object * root,json_object * rule, int position){
+	int nbRules = json_object_array_length(root);
+	if(nbRules <= position ){
+		json_object_array_put_idx(root,nbRules,rule);
+	}else{
+		int indice;
+		int nbRulesToMove = nbRules - position;
+		printf("Nb rules to move: %d", nbRulesToMove);
+
+		for(indice = 0; indice < nbRulesToMove; indice++){
+			json_object * ruleToMove = json_object_array_get_idx(root,nbRules - indice -1);
+			json_object * ruleToMoveIncr = json_object_get(ruleToMove);//To increment the count
+			json_object_array_put_idx(root,nbRules + nbRulesToMove - indice -1,ruleToMoveIncr);
+		}
+		json_object_array_put_idx(root,position,rule);
+	}
+
+}
 
 json_object * convertToJson(char * string) {
 	json_object * jsonString;
@@ -455,7 +474,7 @@ int doAction(json_object * action) {
 
 	if (updateActuator(atoi(actuatorName)) == TRUE) {
 		sendLog(DEBUG, "(TODO) Request to set actuator: %s to %s",actuatorName,actuatorValue);
-		//TODO send msg to pilote
+		sendOFrame(42,atoi(actuatorName),atoi(actuatorValue));//TODO Timestamp
 		return TRUE;
 	}
 	return FALSE;
