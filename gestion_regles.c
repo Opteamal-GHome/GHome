@@ -20,6 +20,7 @@ int checkRule(json_object * rule);
 int checkCondition(json_object * condition);
 int updateActuator(int id);
 int doAction(json_object * action);
+void insertRuleIntoArray(json_object * rootArray,json_object * rule, int position);
 
 void initMainRules(json_object * initSource) {
 
@@ -49,7 +50,7 @@ int addRule(json_object * rule, int position) { //TODO use position
 						json_object_object_get(rule, "ruleName"));
 	if ((int) getRuleByName(
 			ruleName) == FALSE) {
-		json_object_array_add(root, rule);
+		insertRuleIntoArray(root, rule,position);
 	} else {
 		sendLog(DEBUG, "Rule Incoherence: name already in use %s",
 				ruleName);
@@ -71,21 +72,21 @@ int addRule(json_object * rule, int position) { //TODO use position
 	return TRUE;
 }
 //TODO
-void insertRuleIntoArray(json_object * root,json_object * rule, int position){
-	int nbRules = json_object_array_length(root);
+void insertRuleIntoArray(json_object * rootArray,json_object * rule, int position){
+	int nbRules = json_object_array_length(rootArray);
 	if(nbRules <= position ){
-		json_object_array_put_idx(root,nbRules,rule);
+		json_object_array_put_idx(rootArray,nbRules,rule);
 	}else{
 		int indice;
 		int nbRulesToMove = nbRules - position;
-		printf("Nb rules to move: %d", nbRulesToMove);
+		printf("Nb rules to move: %d\n", nbRulesToMove);
 
 		for(indice = 0; indice < nbRulesToMove; indice++){
-			json_object * ruleToMove = json_object_array_get_idx(root,nbRules - indice -1);
+			json_object * ruleToMove = json_object_array_get_idx(rootArray,nbRules - indice -1);
 			json_object * ruleToMoveIncr = json_object_get(ruleToMove);//To increment the count
-			json_object_array_put_idx(root,nbRules + nbRulesToMove - indice -1,ruleToMoveIncr);
+			json_object_array_put_idx(rootArray,nbRules - indice,ruleToMoveIncr);
 		}
-		json_object_array_put_idx(root,position,rule);
+		json_object_array_put_idx(rootArray,position,rule);
 	}
 
 }
