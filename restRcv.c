@@ -44,7 +44,7 @@ void * startRestRcv(void * args) {
 			socketServer);
 
 	//INIT Memory for test
-	initTestMemory();
+	//initTestMemory();
 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
