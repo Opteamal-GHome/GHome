@@ -65,6 +65,7 @@ void * startDispatchServer(void * args) {
         transmit(socketRestClient,received.data,received.msgSize);
         break;
       case SENSORS:
+        sendLog(DEBUG,"Sending message to sensors");
         transmit(socketSensorClient,received.data,received.msgSize);
         break;
       default:
