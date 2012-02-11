@@ -40,7 +40,8 @@ int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata){
   buff[sizeof(long long)]='O';
   memcpy(&buff[9],&sensorId,sizeof(int));
   memcpy(buff+sizeof(long long)+1+sizeof(int),&data,sizeof(int));
-  sendNetMsg(SENSORS,17,buff);
+  buff[17]='\n';
+  sendNetMsg(SENSORS,18,buff);
   return 0;
 }
 static void getSData(unsigned long long timestamp){

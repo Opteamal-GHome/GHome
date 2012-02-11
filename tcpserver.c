@@ -166,7 +166,6 @@ int receive(int socket, char * buff, int size){
 }
 
 int transmit(int socket, char * buff, int size){
-  int i= 0;
   if (send(socket, buff, size,0)==-1)
   {
     sendErr(DEBUG,"send on socket failed",errno); 
