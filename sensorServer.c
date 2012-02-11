@@ -9,8 +9,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-#include <semaphore.h>
-
+#include "gthread.h"
 #define listen_port 421
 
 struct frame {
@@ -67,7 +66,7 @@ static void getSData(unsigned long long timestamp){
         sensors[i].id=received.sensorId;
         sensors[i].type=received.sensorType;
         sensors[i].timestamp=timestamp;
-        sem_post(&sem);
+        gsem_give(&sem);
         return; 
       }
     }

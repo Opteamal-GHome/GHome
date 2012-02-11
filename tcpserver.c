@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "ipcs.h"
+#include "gthread.h"
 #include "mere.h"
 
 #define forward_address "127.0.0.1"
@@ -86,7 +88,7 @@ int initServer(listen_port){
 	int options = 1;
 
 	port = htons(listen_port);
-	listen_socketd = socket(AF_INET, SOCK_STREAM, 0);
+	listen_socketd = gsocket(AF_INET, SOCK_STREAM, 0);
 
 	if(listen_socketd == -1) {
 		sendErr(ERROR,"socket creation ",errno);
@@ -122,7 +124,7 @@ int waitClient(int listenSocket){
 
 	socklen_t client_size = sizeof(client_address);
 
-  request_socketd = accept(listenSocket,\
+  request_socketd = gaccept(listenSocket,\
     (struct sockaddr *) &client_address, &client_size);
   if (request_socketd == -1)
   {
@@ -147,7 +149,7 @@ int receive(int socket, char * buff, int size){
   size_t bytesRcv = 0;
   int i=0;
   for (bytesRcv=0; bytesRcv<size; ){
-    ret=recv(socket,(void*)(buff+bytesRcv),size-ret,0);
+    ret=grecv(socket,(void*)(buff+bytesRcv),size-ret,0);
     bytesRcv+=ret;
     if (ret==0){
       closeClient(socket);
@@ -166,7 +168,7 @@ int receive(int socket, char * buff, int size){
 }
 
 int transmit(int socket, char * buff, int size){
-  if (send(socket, buff, size,0)==-1)
+  if (gsend(socket, buff, size,0)==-1)
   {
     sendErr(DEBUG,"send on socket failed",errno); 
     return -1;

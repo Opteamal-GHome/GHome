@@ -1,7 +1,7 @@
 #include <pthread.h>
-#include <semaphore.h>
 #include <signal.h>
 #include <unistd.h>
+#include "gthread.h"
 #include "mere.h"
 #include "gestion_regles.h"
 
@@ -20,7 +20,7 @@ void * startEngine(void * args){
 
   //wait for the semaphore :
   for (;;){
-    sem_wait(&sem);
+    gsem_take(&sem);
     //For test purposes (a sem_post is done on every sensor activity in sensorServer):
     sendLog(DEBUG,"Engine: checking rules");
     checkRules();

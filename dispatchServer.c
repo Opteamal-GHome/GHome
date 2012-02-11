@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <mqueue.h>
 #include <errno.h>
+#include "ipcs.h"
 
 
 static mqd_t dispatchReq;
@@ -24,7 +25,7 @@ int sendNetMsg(int destination, int len, char * msg){
   //this memory will be freed once the message is read.
   newMsg.data=malloc(len); 
   memcpy(newMsg.data,msg,len);
-  if (mq_send(dispatchReq,(void*)&newMsg,sizeof(struct netMsg),0)){
+  if (gmq_send(dispatchReq,(void*)&newMsg,sizeof(struct netMsg),0)){
     sendErr(WARNING,"mq_send dispatch request failed",errno);
     return -1;
   }
@@ -50,7 +51,7 @@ void * startDispatchServer(void * args) {
   sendLog(DEBUG,"dispatch thread started");
   dispatchReq=*(mqd_t*)args;
   for (stop=0; stop!=STOP;) {
-    msgSize=mq_receive(dispatchReq, (void*)&received, sizeof(struct netMsg), NULL);
+    msgSize=gmq_receive(dispatchReq, (void*)&received, sizeof(struct netMsg), NULL);
     if (msgSize==-1) {
       sendErr(DEBUG,"dispatch mq_receive",errno);
       if (errno==EINTR) {

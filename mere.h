@@ -2,7 +2,7 @@
 #define __MERE_H
 
 #include <mqueue.h>
-#include <semaphore.h>
+#include "gthread.h"
 #include "gestion_capteurs.h"
 
 #define STOP 1
@@ -13,7 +13,7 @@
 
 int socketSensorClient;
 int socketRestClient;
-sem_t sem; 
+gsem_t sem; 
 enum logLvl{
   LOG,
   WARNING,
