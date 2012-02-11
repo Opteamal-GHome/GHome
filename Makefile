@@ -1,6 +1,6 @@
 #Variables utilisées :
-CC=gcc #Compilateur
-EDL=gcc #Linker
+CC=gcc -g#Compilateur
+EDL=gcc -g #Linker
 CCFLAGS=-Wall -m32 #Options de compilations
 EDLFLAGS=-Wall -m32
 EXE=ghome #Nom du binaire à construire

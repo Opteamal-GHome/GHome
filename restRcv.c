@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <json/json.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include "mere.h"
 #include "tcpserver.h"
 #include "gestion_regles.h"
@@ -47,11 +48,12 @@ void * startRestRcv(void * args) {
 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
-	for (; socketRestClient != -1;) { //TODO no always disconnect the client
+	for (; socketRestClient != -1;) { 
 		int msgLength = 0;
 		int msgLengthReceived = 0;
 		int lengthSizeReceived = 0;
 
+		sendLog(LOG, "restServer wait for client");
 		socketRestClient = waitClient(socketServer);
 		if (socketRestClient == -1) {
 			sendErr(WARNING, "restServer, wait failed", errno);
@@ -64,6 +66,7 @@ void * startRestRcv(void * args) {
 			//Get a JSON request
 			lengthSizeReceived = receive(socketRestClient, &msgLength,
 					sizeof(msgLength));
+			msgLength = ntohl(msgLength);
 			if (lengthSizeReceived == sizeof(msgLength)) {
 				JSONRequest = malloc(sizeof(char) * (msgLength + 1));
 				msgLengthReceived = receive(socketRestClient, JSONRequest,
