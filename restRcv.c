@@ -18,6 +18,7 @@ void sendAllDevices();
 int newRuleRequest(json_object * requestJson);
 int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
 char * transformCharToString(char a);
+void removeRuleRequest(json_object * requestJson);
 //char * getNextJSONRequest();
 
 void * startRestRcv(void * args) {
@@ -46,13 +47,14 @@ void * startRestRcv(void * args) {
 	//INIT Memory for test
 	//initTestMemory();
 
+	//json_object * jsonOb = json_object_from_file("initJSON.json");
+	//initMainRules(jsonOb); 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
 	for (; socketRestClient != -1;) { 
 		int msgLength = 0;
 		int msgLengthReceived = 0;
 		int lengthSizeReceived = 0;
-
 		sendLog(LOG, "restServer wait for client");
 		socketRestClient = waitClient(socketServer);
 		if (socketRestClient == -1) {
@@ -91,7 +93,6 @@ void * startRestRcv(void * args) {
 
 			}
 		}
-
 		sendLog(LOG, "restServer deconected");
 	}
 	return NULL;
@@ -123,6 +124,13 @@ int requestTreatment(char *requestRule) {
 				break;
 
 			case GET_DEVICE:
+				break;
+			case REMOVE_RULE:
+				sendLog(DEBUG, "restServer Remove Rule Request");
+				removeRuleRequest(requestJson);
+				sem_post(&sem);
+				json_object_put(requestJson);
+				return TRUE;
 				break;
 			default:
 				break;
@@ -179,6 +187,13 @@ int newRuleRequest(json_object * requestJson) {
 	return FALSE;
 }
 
+void removeRuleRequest(json_object * requestJson) {
+	char * ruleName = (char *) json_object_get_string(
+						json_object_object_get(requestJson, "ruleName"));
+	removeRuleByName(ruleName);
+	saveRules("RULES_STATUS.json");
+}
+
 enum REQUEST_TYPE getRequestType(const char * type) {
 	enum REQUEST_TYPE request_Type;
 	if (strcmp(type, "newRule") == 0) {
@@ -187,7 +202,9 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = GET_ALL_DEVICES;
 	} else if (strcmp(type, "getDevice") == 0) {
 		request_Type = GET_DEVICE;
-	} else {
+	} else if (strcmp(type, "removeRule") == 0) {
+		request_Type = REMOVE_RULE;
+	} else{
 		request_Type = UNKNOWN_REQUEST;
 	}
 	return request_Type;
