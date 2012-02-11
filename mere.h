@@ -26,6 +26,7 @@ struct netMsg {
   char * data;
 };
 int sendNetMsg(int destination, int len, char * msg);
+int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata);
 
 void * startEngine(void * args);
 void * startSensorServer(void *); //Implemented in sensorServer.c

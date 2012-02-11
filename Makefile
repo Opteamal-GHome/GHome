@@ -7,7 +7,7 @@ EXE=ghome #Nom du binaire à construire
 
 OBJ=tcpserver.o mere.o sensorServer.o gestion_capteurs.o gestion_regles.o dispatchServer.o\
 		restRcv.o engine.o
-LIBS=-lpthread -lrt -ljson
+LIBS=libgthread.a -lpthread -lrt -ljson
 
 
 $(EXE): $(OBJ)

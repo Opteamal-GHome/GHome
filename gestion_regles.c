@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include "mere.h"
 #include "gestion_regles.h"
 typedef struct json_object json_object;
 
