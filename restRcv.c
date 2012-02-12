@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "mere.h"
+#include "gthread.h"
 #include "tcpserver.h"
 #include "gestion_regles.h"
 #include "restRcv.h"
@@ -111,7 +112,7 @@ int requestTreatment(char *requestRule) {
 			case NEW_RULE:
 				sendLog(DEBUG, "restServer New Rule Request");
 				if (newRuleRequest(requestJson) == TRUE) {
-					sem_post(&sem);
+					gsem_give(&sem);
 					return TRUE;
 				}
 				break;
