@@ -129,7 +129,7 @@ int requestTreatment(char *requestRule) {
 			case REMOVE_RULE:
 				sendLog(DEBUG, "restServer Remove Rule Request");
 				removeRuleRequest(requestJson);
-				sem_post(&sem);
+				gsem_give(&sem);
 				json_object_put(requestJson);
 				return TRUE;
 				break;
