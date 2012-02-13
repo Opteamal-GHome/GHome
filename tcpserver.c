@@ -51,7 +51,7 @@ int clientIni(FILE * output)
 		}
 		
 	}
-	freeifaddrs(iflist);
+	gfreeifaddrs(iflist);
 	*/
 	//We probably don't need that
 	socketd = socket(AF_INET, SOCK_STREAM, 0);

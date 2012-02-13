@@ -21,9 +21,9 @@ int sendNetMsg(int destination, int len, char * msg){
     return -1;
   }
   //Allocate enough memory to copy the msg,
-  //so that the original buffer can be freed after this function call.
-  //this memory will be freed once the message is read.
-  newMsg.data=malloc(len); 
+  //so that the original buffer can be gfreed after this function call.
+  //this memory will be gfreed once the message is read.
+  newMsg.data=gmalloc(len); 
   memcpy(newMsg.data,msg,len);
   if (gmq_send(dispatchReq,(void*)&newMsg,sizeof(struct netMsg),0)){
     sendErr(WARNING,"mq_send dispatch request failed",errno);
@@ -73,7 +73,7 @@ void * startDispatchServer(void * args) {
         sendLog(WARNING,"dispatch msg, unexpected message dest received : %d",\
             received.dest);
     }
-    free(received.data); //Allocated in sendNetMsg()
+    gfree(received.data); //Allocated in sendNetMsg()
   }
   return NULL;
 } 

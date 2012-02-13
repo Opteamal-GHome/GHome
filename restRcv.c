@@ -71,7 +71,7 @@ void * startRestRcv(void * args) {
 					sizeof(msgLength));
 			msgLength = ntohl(msgLength);
 			if (lengthSizeReceived == sizeof(msgLength)) {
-				JSONRequest = malloc(sizeof(char) * (msgLength + 1));
+				JSONRequest = gmalloc(sizeof(char) * (msgLength + 1));
 				msgLengthReceived = receive(socketRestClient, JSONRequest,
 						msgLength);
 				JSONRequest[msgLength] = '\0';
@@ -90,7 +90,7 @@ void * startRestRcv(void * args) {
 
 					}
 				}
-				free(JSONRequest);
+				gfree(JSONRequest);
 
 			}
 		}
@@ -341,7 +341,7 @@ char * transformCharToString(char a) {
  if (done == TRUE) {
  //Si une requete JSON a ete detectee
 
- char * newRequest = malloc(
+ char * newRequest = gmalloc(
  sizeof(char) * (indiceEnd - indiceStart + 1));
  memset(newRequest, '\0',
  sizeof(char) * (indiceEnd - indiceStart + 1));
@@ -382,7 +382,7 @@ char * transformCharToString(char a) {
 
  //					if (done == TRUE) {
  //						//Si une requete JSON a ete detectee
- //						char * newRequest = malloc(
+ //						char * newRequest = gmalloc(
  //								sizeof(indiceEnd - indiceStart + 1));
  //						newRequest[indiceEnd - indiceStart] = '\0';
  //
