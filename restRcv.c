@@ -45,13 +45,13 @@ void * startRestRcv(void * args) {
 			socketServer);
 
 	//INIT Memory for test
-	//initTestMemory();
+	initTestMemory();
 
 	//json_object * jsonOb = json_object_from_file("initJSON.json");
-	//initMainRules(jsonOb); 
+	//gitinitMainRules(jsonOb); 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
-	for (; socketRestClient != -1;) { 
+	for (; socketRestClient != -1;) {
 		int msgLength = 0;
 		int msgLengthReceived = 0;
 		int lengthSizeReceived = 0;
@@ -64,6 +64,8 @@ void * startRestRcv(void * args) {
 		sendLog(LOG, "restServer connected");
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
+
+			//checkRules();//TO DELETE
 
 			//Get a JSON request
 			lengthSizeReceived = receive(socketRestClient, &msgLength,
@@ -189,7 +191,7 @@ int newRuleRequest(json_object * requestJson) {
 
 void removeRuleRequest(json_object * requestJson) {
 	char * ruleName = (char *) json_object_get_string(
-						json_object_object_get(requestJson, "ruleName"));
+			json_object_object_get(requestJson, "ruleName"));
 	removeRuleByName(ruleName);
 	saveRules("RULES_STATUS.json");
 }
@@ -204,7 +206,7 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = GET_DEVICE;
 	} else if (strcmp(type, "removeRule") == 0) {
 		request_Type = REMOVE_RULE;
-	} else{
+	} else {
 		request_Type = UNKNOWN_REQUEST;
 	}
 	return request_Type;
@@ -296,6 +298,19 @@ char * transformCharToString(char a) {
 	return string;
 }
 
+void transmitUpdate(int id, int value) {
+	json_object * errorMsg = json_object_new_object();
+	char valueChar [10];
+	sprintf(valueChar,"%d",value);
+	json_object_object_add(errorMsg, "msgType",
+			json_object_new_string("device_updated"));
+	json_object_object_add(errorMsg, "data",
+			json_object_new_string(valueChar));
+	char * msg = (char *) json_object_to_json_string(errorMsg);
+	sendNetMsg(REST, strlen(msg), msg);
+	sendLog(DEBUG, "update request (device %d to %d)", id, value);
+	json_object_put(errorMsg);
+}
 /*
  char * getNextJSONRequest() {
  int bracket = 0;
@@ -405,5 +420,4 @@ char * transformCharToString(char a) {
  return (char*) FALSE;
  }
  */
-
 

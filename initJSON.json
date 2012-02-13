@@ -14,8 +14,8 @@
       ],
       "actions": [
          {
-            "actuator": "10",
-            "value": "21"
+            "actuator": "1",
+            "value": "0"
          }
       ]
    },
@@ -24,7 +24,7 @@
       "conditions": [
          {
             "type": "inf",
-            "leftOp": "1",
+            "leftOp": "10000",
             "rightOp": "@10"
          },
          {
