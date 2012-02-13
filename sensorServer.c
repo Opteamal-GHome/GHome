@@ -5,6 +5,7 @@
 #include "gestion_capteurs.h"
 #include <endian.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
