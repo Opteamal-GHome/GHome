@@ -77,7 +77,7 @@ int sendErr(enum logLvl level, char * info, int errnb) {
   };
   memcpy(msg.mtext.data,info,strlen(info));
   if (gmq_send(msgLog,(void *)&msg, sizeof(struct mlog),1)==-1) {
-    perror("'\[\x1b[31m\\][ERROR] sendLog\\[\x1b[0m\\]");
+    perror(BOLD(RED("[ERROR] sendLog")));
     return -1;
   }
   return 0;
@@ -235,10 +235,6 @@ int main(int argc, char * argv[]) {
   //Create semaphore for the engine :
   gsem_init(&sem, 0);
   //create various threads : 
-  if (gthread_create(&dst,STACKSZ,startDispatchServer,(void*)&dispatchReq)!=0){
-    logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
-    handler(0);
-  }
   //Start the thread with the defaults arguments, using the startSensorServer 
   //function as entry point, with no arguments to this function.
   if (gthread_create(&sst,STACKSZ,startSensorServer,NULL)!=0){
@@ -249,8 +245,13 @@ int main(int argc, char * argv[]) {
     logErr(ERROR,"pthread_create failed for rest receive thread", errno);
     handler(0);
   }
+  if (gthread_create(&dst,STACKSZ,startDispatchServer,&dispatchReq)!=0){
+    logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
+    handler(0);
+  }
   if (gthread_create(&iet,STACKSZ,startEngine,NULL)!=0){
     logErr(ERROR,"pthread_create failes for inference engine thread",errno);
+    handler(0);
   }
   //TODO : wait for both servers to have a client.
 
