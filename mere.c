@@ -75,7 +75,7 @@ int sendErr(enum logLvl level, char * info, int errnb) {
   };
   memcpy(msg.mtext.data,info,strlen(info));
   if (mq_send(msgLog,(void *)&msg, sizeof(struct mlog),1)==-1) {
-    perror("'\[\x1b[31m\\][ERROR] sendLog\\[\x1b[0m\\]");
+    perror(BOLD(RED("[ERROR] sendLog")));
     return -1;
   }
   return 0;
@@ -227,10 +227,6 @@ int main(int argc, char * argv[]) {
     logErr(ERROR,"sem_init",errno);
   }
   //create various threads : 
-  if (pthread_create(&dst,NULL,startDispatchServer,&dispatchReq)!=0){
-    logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
-    handler(0);
-  }
   //Start the thread with the defaults arguments, using the startSensorServer 
   //function as entry point, with no arguments to this function.
   if (pthread_create(&sst,NULL,startSensorServer,NULL)!=0){
@@ -239,6 +235,10 @@ int main(int argc, char * argv[]) {
   }
   if (pthread_create(&rrt,NULL,startRestRcv,NULL)!=0){
     logErr(ERROR,"pthread_create failed for rest receive thread", errno);
+    handler(0);
+  }
+  if (pthread_create(&dst,NULL,startDispatchServer,&dispatchReq)!=0){
+    logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
     handler(0);
   }
   if (pthread_create(&iet,NULL,startEngine,NULL)!=0){
