@@ -24,8 +24,8 @@
 /*
  * Lance le traitement des echanges avec le client REST.
  */
-void * startRestRcv(void * args);
-void transmitUpdate(int id, int value);
+//void * startRestRcv(void * args);
+//void transmitUpdate(int id, int value);
 
 
 #endif /* RESTRCV_H_ */

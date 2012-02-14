@@ -16,8 +16,10 @@
 #define INFO 3
 #define REST 1
 #define SENSORS 2
+#define RESTUP 3
 
 int socketSensorClient;
+int socketRestServer;
 int socketRestClient;
 gsem_t sem; 
 enum logLvl{
@@ -33,6 +35,11 @@ struct netMsg {
 };
 int sendNetMsg(int destination, int len, char * msg);
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata);
+
+//init the socket for sending update
+int startUpdateSender();
+//send an update to rest
+void transmitUpdate(int,int);
 
 void * startEngine(void * args);
 void * startSensorServer(void *); //Implemented in sensorServer.c
