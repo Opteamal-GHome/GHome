@@ -49,42 +49,51 @@ int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata) {
 	}
 	return 0;
 }
-static void getSData(unsigned long long timestamp) {
-	//This frames are used to create or remove sensors, let's do that :
-	struct sData received;
-	char data[6];
-	int i;
-	receive(socketSensorClient, (void *) data, 6);
-	for (i = 0; i < 6; i++) {
-		sendLog(DEBUG, "%x ", data[i]);
-	}
-	received.infoType = data[0];
-	memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
-	received.sensorType = data[5];
-	received.sensorId = be32toh(received.sensorId);
-	sendLog(DEBUG, "\ninfo type : '%c', sensor ID : %x, sensor type : '%c'",
-			received.infoType, received.sensorId, received.sensorType);
-	switch (received.infoType) {
-	case 'A':
-		//look for a vacation in sensors table :
-		for (i = 0; i < NB_SENSORS; i++) {
-			if (sensors[i].id == 0) {
-				sensors[i].id = received.sensorId;
-				sensors[i].type = received.sensorType;
-				sensors[i].timestamp = timestamp;
-				sem_post(&sem);
-				return;
-			}
-		}
-		sendLog(WARNING, "No more room in sensor table");
-		break;
-	case 'R':
-		removeMemDevice(received.sensorId);
-		break;
-	default:
-		sendLog(WARNING, "Unknown info type in S frame decoding");
-	}
-}
+
+static void getSData(unsigned long long timestamp){
+  //This frames are used to create or remove sensors, let's do that :
+  struct sData received;
+  struct DEVICE * new_dev=NULL;
+  char data[6];
+  int i;
+  receive(socketSensorClient, (void *)data, 6);
+  for (i=0; i<6; i++){
+    sendLog(DEBUG,"%x ", data[i]);
+  }
+  received.infoType=data[0];
+  memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
+  received.sensorType=data[5];
+  received.sensorId=be32toh(received.sensorId);
+  sendLog(DEBUG,"\ninfo type : '%c', sensor ID : %x, sensor type : '%c'",\
+      received.infoType, received.sensorId, received.sensorType);
+  switch (received.infoType){
+  case 'A' :
+  //look if the sensor already exist :
+    new_dev=getMemDevice(received.sensorId);
+    if(new_dev!=NULL){
+      //update values in case it does :
+      new_dev->type=received.sensorType;
+      new_dev->timestamp=timestamp;
+    }
+  //look for a vacation in sensors table : 
+    for (i=0; i<NB_SENSORS; i++){
+      if(sensors[i].id==0){
+        sensors[i].id=received.sensorId;
+        sensors[i].type=received.sensorType;
+        sensors[i].timestamp=timestamp;
+        sem_post(&sem);
+        return; 
+      }
+    }
+    sendLog(WARNING,"No more room in sensor table");
+    break;
+  case 'R' :
+    removeMemDevice(received.sensorId);
+    break;
+  default :
+    sendLog(WARNING,"Unknown info type in S frame decoding");
+  }
+} 
 
 static void getOData() {
 	struct oData received;

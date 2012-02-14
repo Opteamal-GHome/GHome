@@ -11,11 +11,10 @@
  * Renvoie la structure associée du capteur d'ID id ou -1 si il n'existe pas
  */
 struct DEVICE * getMemDevice(int id){
-	struct DEVICE* sensor = (struct DEVICE*) FALSE;
+	struct DEVICE* sensor = NULL;
 	int i=0;
 	//Retourne un pointeur sur le sensor
-	for(; i<NB_SENSORS && (sensors[i].id != id) ; i++){
-	}
+	for(; i<NB_SENSORS && (sensors[i].id != id) ; i++){ }
 	if ( i<NB_SENSORS )
 		 sensor = &sensors[i];
 	return sensor;
