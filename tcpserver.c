@@ -160,7 +160,7 @@ int receive(int socket, char * buff, int size){
     }else{
       sendLog(DEBUG,"Received %d bytes.",ret);
       for (i=0; i<ret; i++){
-        //sendLog(DEBUG,"%hhx ",buff[i]);
+        sendLog(DEBUG,"%hhx ",buff[i]);
       }
     }
   }

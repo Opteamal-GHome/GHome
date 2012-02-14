@@ -28,6 +28,7 @@ struct oData {
 };
 
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata){
+int i;
   char buff[20];
   uint64_t timestamp;
   int sensorId;
@@ -42,6 +43,9 @@ int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata){
   memcpy(buff+sizeof(long long)+1+sizeof(int),&data,sizeof(int));
   buff[17]='\n';
   sendNetMsg(SENSORS,18,buff);
+  for (i=0; i<18; i++){
+        sendLog(DEBUG,"%hhx ",buff[i]);
+  }
   return 0;
 }
 static void getSData(unsigned long long timestamp){
@@ -89,6 +93,7 @@ static void getOData(){
   sendLog(DEBUG,"sensor ID : %d, sensor value : %d",\
       received.sensorId, received.data);
   setValue(received.sensorId, received.data);
+  transmitUpdate(received.sensorId,received.data);
 }
 
 void * startSensorServer(void * args){
@@ -120,7 +125,7 @@ void * startSensorServer(void * args){
       return NULL;
     }
     sendLog(LOG, "Sensors client connected");
-    sendOFrame(4142,1234,1337);
+    //sendOFrame(4142,6666,1337);
     for (ret=0; ret!=-1;){
       //Each frame is cut in 3 pieces, timestamp, type and data
       //The first two pieces have a fixed size of 9 bytes, let's get those.
