@@ -51,6 +51,7 @@ int i;
 static void getSData(unsigned long long timestamp){
   //This frames are used to create or remove sensors, let's do that :
   struct sData received;
+  struct DEVICE * new_dev=NULL;
   char data[6];
   int i;
   receive(socketSensorClient, (void *)data, 6);
@@ -65,6 +66,13 @@ static void getSData(unsigned long long timestamp){
       received.infoType, received.sensorId, received.sensorType);
   switch (received.infoType){
   case 'A' :
+  //look if the sensor already exist :
+    new_dev=getMemDevice(received.sensorId);
+    if(new_dev!=NULL){
+      //update values in case it does :
+      new_dev->type=received.sensorType;
+      new_dev->timestamp=timestamp;
+    }
   //look for a vacation in sensors table : 
     for (i=0; i<NB_SENSORS; i++){
       if(sensors[i].id==0){
