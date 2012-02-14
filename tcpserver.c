@@ -166,6 +166,10 @@ int receive(int socket, char * buff, int size){
 }
 
 int transmit(int socket, char * buff, int size){
+int i;
+	for (i=0; i<size; i++){
+        sendLog(DEBUG,"%hhx ",buff[i]);
+      }
   if (send(socket, buff, size,0)==-1)
   {
     sendErr(DEBUG,"send on socket failed",errno); 

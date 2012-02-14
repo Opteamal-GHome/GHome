@@ -5,12 +5,14 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <mqueue.h>
 #include <semaphore.h>
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include "tcpserver.h"
 #include "mere.h"
 
@@ -29,261 +31,252 @@
 #define BOLD(a) "\x1b[1m"a"\x1b[0m"
 #define UNDERLINED(a) "\x1b[4m"a"\x1b[0m"
 
-static FILE * logFile=NULL;
-static int verbose=0;
+static FILE * logFile = NULL;
+static int verbose = 0;
 
 pthread_t sst; //sensorServerThread
 pthread_t dst; //dispatchServerThread
 pthread_t rrt; //rest rcv Thread
 pthread_t iet; //inference engine Thread
-struct msgData{
-  int errnb;
-  enum logLvl level;
-  char data[MSG_SIZE];
+struct msgData {
+	int errnb;
+	enum logLvl level;
+	char data[MSG_SIZE];
 };
 
-struct mlog{
-  long mtype; //can be 0 for message or 1 for control
-  struct msgData mtext;
+struct mlog {
+	long mtype; //can be 0 for message or 1 for control
+	struct msgData mtext;
 };
 static mqd_t dispatchReq; //message queue to send messages to the outside world 
-static mqd_t msgLog; 
+static mqd_t msgLog;
 
-int sendLog(enum logLvl level, char * format,...) {
-  struct mlog msg = {
-    .mtype=INFO,
-    .mtext.errnb=0,
-    .mtext.level=level,
-  };
-  va_list args;
-  va_start(args,format);
-  vsprintf(msg.mtext.data,format,args);
-  if (mq_send(msgLog,(void *)&msg, sizeof(struct mlog),0)==-1) {
-    perror("sendLog");
-    va_end(args);
-    return -1;
-  }
-  va_end(args);
-  return 0;
+int sendLog(enum logLvl level, char * format, ...) {
+	struct mlog msg = { .mtype = INFO, .mtext.errnb = 0, .mtext.level = level, };
+	va_list args;
+	va_start(args, format);
+	vsprintf(msg.mtext.data, format, args);
+	if (mq_send(msgLog, (void *) &msg, sizeof(struct mlog), 0) == -1) {
+		perror("sendLog");
+		va_end(args);
+		return -1;
+	}va_end(args);
+	return 0;
 }
 
 int sendErr(enum logLvl level, char * info, int errnb) {
-   struct mlog msg = {
-    .mtype=ERR,
-    .mtext.errnb=errnb,
-    .mtext.level=level,
-  };
-  memcpy(msg.mtext.data,info,strlen(info));
-  if (mq_send(msgLog,(void *)&msg, sizeof(struct mlog),1)==-1) {
-    perror(BOLD(RED("[ERROR] sendLog")));
-    return -1;
-  }
-  return 0;
+	struct mlog msg =
+			{ .mtype = ERR, .mtext.errnb = errnb, .mtext.level = level, };
+	memcpy(msg.mtext.data, info, strlen(info));
+	if (mq_send(msgLog, (void *) &msg, sizeof(struct mlog), 1) == -1) {
+		perror(BOLD(RED("[ERROR] sendLog")));
+		return -1;
+	}
+	return 0;
 }
 
 static int logMsg(enum logLvl level, char * msg) {
 
-  switch (level){
-    case LOG :
-      fprintf(logFile,"[LOG] ");
-      printf(BOLD(GREEN("[LOG] ")));
-      break;
-    case WARNING :
-      fprintf(logFile,"[WARN] ");
-      printf(BOLD(CYAN("[WARN] ")));
-      break;
-    case ERROR :
-      fprintf(logFile,"[ERROR] ");
-      printf(BOLD(RED("[ERROR] ")));
-      break;
-    case DEBUG :
-      fprintf(logFile,"[DEBUG] ");
-      printf(BOLD(BLUE("[DEBUG] ")));
-      break;
-  }
-  fprintf(logFile,"%s\n",msg);
-  if (verbose>=1 || level==ERROR){
-    printf("%s\n",msg);
-  }
-  return 0;
+	switch (level) {
+	case LOG:
+		fprintf(logFile, "[LOG] ");
+		printf(BOLD(GREEN("[LOG] ")));
+		break;
+	case WARNING:
+		fprintf(logFile, "[WARN] ");
+		printf(BOLD(CYAN("[WARN] ")));
+		break;
+	case ERROR:
+		fprintf(logFile, "[ERROR] ");
+		printf(BOLD(RED("[ERROR] ")));
+		break;
+	case DEBUG:
+		fprintf(logFile, "[DEBUG] ");
+		printf(BOLD(BLUE("[DEBUG] ")));
+		break;
+	}
+	fprintf(logFile, "%s\n", msg);
+	if (verbose >= 1 || level == ERROR) {
+		printf("%s\n", msg);
+	}
+	return 0;
 }
 static int logErr(enum logLvl level, char * log, int err) {
-  char errBuff[ERR_SIZE];
-  char buff[MSG_SIZE];
-  strerror_r(err,errBuff,ERR_SIZE);
-  sprintf(buff,"%s : %s",log,errBuff);
-  logMsg(level, buff);
-  return 0;
+	char errBuff[ERR_SIZE];
+	char buff[MSG_SIZE];
+	strerror_r(err, errBuff, ERR_SIZE);
+	sprintf(buff, "%s : %s", log, errBuff);
+	logMsg(level, buff);
+	return 0;
 }
-void handler(int sigNb){
-  //We've been asked to terminate  
-  int ret = 0;
-  printf("\n"); //this one is purely to avoid having the ^C polluting our output
-  switch (sigNb){
-    case SIGINT:
-      logMsg(LOG,"Received Ctrl-C, quiting GHome server");
-      break;
-    case SIGKILL:
-      logMsg(LOG,"Received Sigkill, quitting GHome server");
-      break;
-  }
-  //ask for application termination
-  logMsg(LOG,"Exiting application");
-  logMsg(DEBUG,"Canceling threads");
-  pthread_cancel(rrt);
-  pthread_cancel(dst);
-  pthread_cancel(iet);
-  ret=pthread_cancel(sst);
-  if(ret==-1){
-    logErr(WARNING,"Canceling sst thread failed",errno);
-  } else {
-    logMsg(DEBUG,"Joining sst thread");
-    ret=pthread_join(sst,NULL);
-    if(ret==-1){
-      logErr(WARNING,"joining failed",errno);
-    }
-  }
-  logMsg(DEBUG,"Removing message queues");
-  if(mq_close(dispatchReq)){
-    logErr(WARNING,"mq_close dispatchReq",errno);
-  }
-  if(mq_unlink(MQ_DISPATCH_NAME)){
-    logErr(DEBUG,"mq_unlink",errno);
-  }
-  if(mq_close(msgLog)){
-    logErr(WARNING,"mq_close msgLog",errno);
-  }
-  if(mq_unlink(MQ_LOG_NAME)){
-    logErr(DEBUG,"mq_unlink",errno);
-  }
+void handler(int sigNb) {
+	//We've been asked to terminate
+	int ret = 0;
+	printf("\n"); //this one is purely to avoid having the ^C polluting our output
+	switch (sigNb) {
+	case SIGINT:
+		logMsg(LOG, "Received Ctrl-C, quiting GHome server");
+		break;
+	case SIGKILL:
+		logMsg(LOG, "Received Sigkill, quitting GHome server");
+		break;
+	}
+	//ask for application termination
+	logMsg(LOG, "Exiting application");
+	logMsg(DEBUG, "Canceling threads");
+	pthread_cancel(rrt);
+	pthread_cancel(dst);
+	pthread_cancel(iet);
+	ret = pthread_cancel(sst);
+	if (ret == -1) {
+		logErr(WARNING, "Canceling sst thread failed", errno);
+	} else {
+		logMsg(DEBUG, "Joining sst thread");
+		ret = pthread_join(sst, NULL);
+		if (ret == -1) {
+			logErr(WARNING, "joining failed", errno);
+		}
+	}
+	logMsg(DEBUG, "Removing message queues");
+	if (mq_close(dispatchReq)) {
+		logErr(WARNING, "mq_close dispatchReq", errno);
+	}
+	if (mq_unlink(MQ_DISPATCH_NAME)) {
+		logErr(DEBUG, "mq_unlink", errno);
+	}
+	if (mq_close(msgLog)) {
+		logErr(WARNING, "mq_close msgLog", errno);
+	}
+	if (mq_unlink(MQ_LOG_NAME)) {
+		logErr(DEBUG, "mq_unlink", errno);
+	}
 }
 int main(int argc, char * argv[]) {
-  //init 
-  char buff[MSG_SIZE];
-  //message box control :
-  int stop=0;
-  size_t msgSize;
-  mode_t mqMode= S_IRWXO; //Allows everything for everyone
-  //TODO : change the mode to user.
-  struct mq_attr attrs = {
-    .mq_maxmsg=10, //beyond 10 msgs one might need root acces
-  };
-  //threads control :
+	//init
+	char buff[MSG_SIZE];
+	//message box control :
+	int stop = 0;
+	size_t msgSize;
+	mode_t mqMode = S_IRWXO; //Allows everything for everyone
+	//TODO : change the mode to user.
+	struct mq_attr attrs = { .mq_maxmsg = 10, //beyond 10 msgs one might need root acces
+			};
+	//threads control :
 
-  struct mlog received;
-  struct sigaction act = {
-    .sa_handler=handler,
-    .sa_flags=0,
-  };
-  //temp : 
-  verbose = 1;
-  //ipcs IDs :
-  msgLog = 0;
+	struct mlog received;
+	struct sigaction act = { .sa_handler=handler, .sa_flags = 0, };
+	//temp :
+	verbose = 1;
+	//ipcs IDs :
+	msgLog = 0;
 
-  printf("Starting application...\n");
-  //create log file :
-  logFile = fopen("./ghome.log","w");
-  if (logFile==NULL) {
-    perror("fopen ");
-    return -1;
-  }
-  logMsg(LOG,"Log file created");
-  //set up signals handlers :
-  sigaction(SIGINT,&act,NULL);
-  sigaction(SIGTERM,&act,NULL);
+	printf("Starting application...\n");
+	//create log file :
+	logFile = fopen("./ghome.log", "w");
+	if (logFile == NULL) {
+		perror("fopen ");
+		return -1;
+	}
+	logMsg(LOG, "Log file created");
+	//set up signals handlers :
+	sigaction(SIGINT, &act, NULL);
+	sigaction(SIGTERM, &act, NULL);
 
-  //Make the device's structure content safe
-  initMemory();
+	//Make the device's structure content safe
+	initMemory();
 
-  //create log mailbox :
-	if(mq_unlink(MQ_LOG_NAME)){
-    logErr(DEBUG,"mq_unlink log",errno);
-  }
-	if(mq_unlink(MQ_DISPATCH_NAME)){
-    logErr(DEBUG,"mq_unlink dispatch",errno);
-  }
-  
-  attrs.mq_msgsize=200;
-	msgLog = mq_open( MQ_LOG_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
-      mqMode, &attrs);
-  if (msgLog==-1) {
-    logErr(ERROR,"mq_open",errno);
-    return -1;
-  }
-  snprintf(buff,MSG_SIZE,"Message box created with fd : %d",msgLog);
-  logMsg(DEBUG,buff);
+	//create log mailbox :
+	if (mq_unlink(MQ_LOG_NAME)) {
+		logErr(DEBUG, "mq_unlink log", errno);
+	}
+	if (mq_unlink(MQ_DISPATCH_NAME)) {
+		logErr(DEBUG, "mq_unlink dispatch", errno);
+	}
 
-  attrs.mq_msgsize=sizeof(struct netMsg);
-  //Create a message queue to receive dispatch request :
-	dispatchReq = mq_open( MQ_DISPATCH_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
-      mqMode, &attrs);
-  if (msgLog==-1) {
-    logErr(ERROR,"mq_open",errno);
-    return -1;
-  }
+	attrs.mq_msgsize = 200;
+	msgLog = mq_open(MQ_LOG_NAME, /*O_NONBLOCK|*/O_EXCL | O_RDWR | O_CREAT,
+			mqMode, &attrs);
+	if (msgLog == -1) {
+		logErr(ERROR, "mq_open", errno);
+		return -1;
+	}
+	snprintf(buff, MSG_SIZE, "Message box created with fd : %d", msgLog);
+	logMsg(DEBUG, buff);
 
-  //Create semaphore for the engine :
-  if(sem_init(&sem, 0, 0)==-1){
-    logErr(ERROR,"sem_init",errno);
-  }
-  //create various threads : 
-  //Start the thread with the defaults arguments, using the startSensorServer 
-  //function as entry point, with no arguments to this function.
-  if (pthread_create(&sst,NULL,startSensorServer,NULL)!=0){
-    logErr(ERROR,"pthread_create failed for sensorServer thread", errno);
-    handler(0);
-  }
-  if (pthread_create(&rrt,NULL,startRestRcv,NULL)!=0){
-    logErr(ERROR,"pthread_create failed for rest receive thread", errno);
-    handler(0);
-  }
-  if (pthread_create(&dst,NULL,startDispatchServer,&dispatchReq)!=0){
-    logErr(ERROR,"pthread_create failed for dispatch Server thread", errno);
-    handler(0);
-  }
-  if (pthread_create(&iet,NULL,startEngine,NULL)!=0){
-    logErr(ERROR,"pthread_create failes for inference engine thread",errno);
-  }
-  //TODO : wait for both servers to have a client.
+	attrs.mq_msgsize = sizeof(struct netMsg);
+	//Create a message queue to receive dispatch request :
+	dispatchReq = mq_open(MQ_DISPATCH_NAME, /*O_NONBLOCK|*/
+			O_EXCL | O_RDWR | O_CREAT, mqMode, &attrs);
+	if (msgLog == -1) {
+		logErr(ERROR, "mq_open", errno);
+		return -1;
+	}
 
-  //Wait for messages to log :
-  received.mtype=INFO;
-  received.mtext.level=DEBUG;
-  memcpy(received.mtext.data,"test message received",22);
-  if (mq_send(msgLog, (void *)&received, sizeof(struct mlog),0)==-1) {
-    logErr(WARNING,"mq_send failed",errno);
-  }
-  for (stop=0; stop!=STOP;) {
-    msgSize=mq_receive(msgLog, (void*)&received, 210, NULL);
-    if (msgSize==-1) {
-      logErr(DEBUG,"mq_receive",errno);
-      if (errno==EINTR) {
-        continue; //we were interupted because a signal was caught
-      } else {
-        stop=STOP;
-        continue;
-      }
-    }
-    switch (received.mtype) {
-      case STOP :
-        stop=STOP;
-        break;
-      case ERR :
-        logErr(received.mtext.level, received.mtext.data,\
-            received.mtext.errnb);
-        break;
-      case INFO :
-        logMsg(received.mtext.level, received.mtext.data);
-        break;
-      default :
-        logMsg(WARNING,"Received unexpected message");
-    }
-  }
-  //Exit
-  fclose(logFile);
-  logMsg(DEBUG,"Closing file descriptors");
-  exit(0);
+	//Create semaphore for the engine :
+	if (sem_init(&sem, 0, 0) == -1) {
+		logErr(ERROR, "sem_init", errno);
+	}
+	//create various threads :
+	//Start the thread with the defaults arguments, using the startSensorServer
+	//function as entry point, with no arguments to this function.
+	if (pthread_create(&sst, NULL, startSensorServer, NULL) != 0) {
+		logErr(ERROR, "pthread_create failed for sensorServer thread", errno);
+		handler(0);
+	}
+	if (pthread_create(&rrt, NULL, startRestRcv, NULL) != 0) {
+		logErr(ERROR, "pthread_create failed for rest receive thread", errno);
+		handler(0);
+	}
+	if (pthread_create(&dst, NULL, startDispatchServer, &dispatchReq) != 0) {
+		logErr(ERROR, "pthread_create failed for dispatch Server thread",
+				errno);
+		handler(0);
+	}
+	if (pthread_create(&iet, NULL, startEngine, NULL) != 0) {
+		logErr(ERROR, "pthread_create failes for inference engine thread",
+				errno);
+	}
+
+	//TODO : wait for both servers to have a client.
+
+	//Wait for messages to log :
+	received.mtype = INFO;
+	received.mtext.level = DEBUG;
+	memcpy(received.mtext.data, "test message received", 22);
+	if (mq_send(msgLog, (void *) &received, sizeof(struct mlog), 0) == -1) {
+		logErr(WARNING, "mq_send failed", errno);
+	}
+	for (stop = 0; stop != STOP;) {
+		msgSize = mq_receive(msgLog, (void*) &received, 210, NULL);
+		if (msgSize == -1) {
+			logErr(DEBUG, "mq_receive", errno);
+			if (errno == EINTR) {
+				continue; //we were interupted because a signal was caught
+			} else {
+				stop = STOP;
+				continue;
+			}
+		}
+		switch (received.mtype) {
+		case STOP:
+			stop = STOP;
+			break;
+		case ERR:
+			logErr(received.mtext.level, received.mtext.data,
+					received.mtext.errnb);
+			break;
+		case INFO:
+			logMsg(received.mtext.level, received.mtext.data);
+			break;
+		default:
+			logMsg(WARNING, "Received unexpected message");
+		}
+	}
+
+
+	//Exit
+	fclose(logFile);
+	logMsg(DEBUG, "Closing file descriptors");
+	exit(0);
 }
-
-
 

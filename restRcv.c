@@ -10,6 +10,23 @@
 #include "gestion_regles.h"
 #include "restRcv.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/param.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <string.h>
+#include <json/json.h>
+
 typedef struct json_object json_object;
 
 enum REQUEST_TYPE getRequestType(const char * type);
@@ -20,6 +37,7 @@ int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
 char * transformCharToString(char a);
 void removeRuleRequest(json_object * requestJson);
 //char * getNextJSONRequest();
+void sendAllRules();
 
 void * startRestRcv(void * args) {
 	sigset_t set;
@@ -48,7 +66,7 @@ void * startRestRcv(void * args) {
 	initTestMemory();
 
 	//json_object * jsonOb = json_object_from_file("initJSON.json");
-	//gitinitMainRules(jsonOb); 
+	//initMainRules(jsonOb); 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
 	for (; socketRestClient != -1;) {
@@ -62,8 +80,12 @@ void * startRestRcv(void * args) {
 			return NULL;
 		}
 		sendLog(LOG, "restServer connected");
+		//Connection update
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
+
+		//Init rest Server Socket
+		//startUpdateSender();
 
 			//checkRules();//TO DELETE
 
@@ -94,8 +116,15 @@ void * startRestRcv(void * args) {
 				free(JSONRequest);
 
 			}
+		
+			//Destroy socket for sender
+			/* fermeture de la connection */
+			//shutdown(socketRestServer, 2);
+			//close(socketRestServer);
 		}
 		sendLog(LOG, "restServer deconected");
+
+
 	}
 	return NULL;
 }
@@ -122,6 +151,11 @@ int requestTreatment(char *requestRule) {
 				sendLog(DEBUG, "restServer Get All Device Request");
 				sendAllDevices();
 				json_object_put(requestJson);
+				return TRUE;
+				break;
+			case GET_ALL_RULES:
+				sendLog(DEBUG, "restServer Get All Rules Request");
+				sendAllRules();
 				return TRUE;
 				break;
 
@@ -206,6 +240,8 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = GET_DEVICE;
 	} else if (strcmp(type, "removeRule") == 0) {
 		request_Type = REMOVE_RULE;
+	} else if (strcmp(type, "getAllRules") == 0) {
+		request_Type = GET_ALL_RULES;
 	} else {
 		request_Type = UNKNOWN_REQUEST;
 	}
@@ -241,6 +277,21 @@ void sendAllDevices() {
 			addDeviceToMsg(device, rootMsg);
 		}
 	}
+
+	char * msg = (char *) json_object_to_json_string(rootMsg);
+	sendNetMsg(REST, strlen(msg), msg);
+	//sendLog(DEBUG, "restServer devices sent : %s", msg);
+	json_object_put(rootMsg);
+
+}
+
+void sendAllRules() {
+
+	json_object * rootMsg = json_object_new_object();
+
+	json_object_object_add(rootMsg, "msgType",
+			json_object_new_string("R_getAllRules"));
+	json_object_object_add(rootMsg, "rules", json_object_get(root));
 
 	char * msg = (char *) json_object_to_json_string(rootMsg);
 	sendNetMsg(REST, strlen(msg), msg);
@@ -307,10 +358,51 @@ void transmitUpdate(int id, int value) {
 	json_object_object_add(errorMsg, "data",
 			json_object_new_string(valueChar));
 	char * msg = (char *) json_object_to_json_string(errorMsg);
-	sendNetMsg(REST, strlen(msg), msg);
+	sendNetMsg(RESTUP, strlen(msg), msg);
 	sendLog(DEBUG, "update request (device %d to %d)", id, value);
 	json_object_put(errorMsg);
 }
+
+int startUpdateSender() {
+
+	char *server_name = "134.214.167.59";
+	struct sockaddr_in serverSockAddr;
+	struct hostent *serverHostEnt;
+	long hostAddr;
+
+	bzero(&serverSockAddr, sizeof(serverSockAddr));
+	hostAddr = inet_addr(server_name);
+	if ((long) hostAddr != (long) -1)
+		bcopy(&hostAddr, &serverSockAddr.sin_addr, sizeof(hostAddr));
+	else {
+		serverHostEnt = gethostbyname(server_name);
+		if (serverHostEnt == NULL) {
+			sendLog(DEBUG, "update request prblm getHost");
+			return -1;
+		}
+		bcopy(serverHostEnt->h_addr, &serverSockAddr.sin_addr,
+				serverHostEnt->h_length);
+	}
+
+	serverSockAddr.sin_port = htons(421);
+	serverSockAddr.sin_family = AF_INET;
+
+	/* creation de la socket */
+	if ((socketRestServer = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		sendLog(DEBUG, "update request: socket creation failed");
+		return -1;
+	}
+
+	/* requete de connexion */
+	if (connect(socketRestServer, (struct sockaddr *) &serverSockAddr,
+			sizeof(serverSockAddr)) < 0) {
+		sendLog(DEBUG, "update request: connection request failed");
+		return -1;
+	}
+
+	return TRUE;
+}
+
 /*
  char * getNextJSONRequest() {
  int bracket = 0;
