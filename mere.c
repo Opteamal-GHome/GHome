@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include "tcpserver.h"
 #include "mere.h"
+#include "config.h"
 
 #define ACCES 0660
 #define LOG_SIZE 150
@@ -192,7 +193,6 @@ int main(int argc, char * argv[]) {
 	if (mq_unlink(MQ_DISPATCH_NAME)) {
 		logErr(DEBUG, "mq_unlink dispatch", errno);
 	}
-
 	attrs.mq_msgsize = 200;
 	msgLog = mq_open(MQ_LOG_NAME, /*O_NONBLOCK|*/O_EXCL | O_RDWR | O_CREAT,
 			mqMode, &attrs);
@@ -202,6 +202,13 @@ int main(int argc, char * argv[]) {
 	}
 	snprintf(buff, MSG_SIZE, "Message box created with fd : %d", msgLog);
 	logMsg(DEBUG, buff);
+
+  logMsg(LOG,"Loading ghome.conf...");
+  if (load_config()==-1){
+    logMsg(WARNING,"No config file could be found, using default values");
+  } else {
+    logMsg(LOG,"Config file loaded");
+  }
 
 	attrs.mq_msgsize = sizeof(struct netMsg);
 	//Create a message queue to receive dispatch request :
