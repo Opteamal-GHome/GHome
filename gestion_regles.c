@@ -174,6 +174,7 @@ int checkMainRulesCoherence() {
 						"Rule: %s removed",
 						json_object_get_string(
 								json_object_object_get(rule, "ruleName")));
+				sendRemovedRule(json_object_object_get(rule, "ruleName"));
 				removeRuleByIndex(i);
 			}
 		}

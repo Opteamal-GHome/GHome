@@ -84,8 +84,8 @@ void * startRestRcv(void * args) {
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
-		//Init rest Server Socket
-		//startUpdateSender();
+			//Init rest Server Socket
+			//startUpdateSender();
 
 			//checkRules();//TO DELETE
 
@@ -116,14 +116,13 @@ void * startRestRcv(void * args) {
 				free(JSONRequest);
 
 			}
-		
+
 			//Destroy socket for sender
 			/* fermeture de la connection */
 			//shutdown(socketRestServer, 2);
 			//close(socketRestServer);
 		}
 		sendLog(LOG, "restServer deconected");
-
 
 	}
 	return NULL;
@@ -351,16 +350,28 @@ char * transformCharToString(char a) {
 
 void transmitUpdate(int id, int value) {
 	json_object * errorMsg = json_object_new_object();
-	char valueChar [10];
-	sprintf(valueChar,"%d",value);
+	char valueChar[10];
+	sprintf(valueChar, "%d", value);
 	json_object_object_add(errorMsg, "msgType",
 			json_object_new_string("device_updated"));
-	json_object_object_add(errorMsg, "data",
-			json_object_new_string(valueChar));
+	json_object_object_add(errorMsg, "data", json_object_new_string(valueChar));
 	char * msg = (char *) json_object_to_json_string(errorMsg);
 	sendNetMsg(RESTUP, strlen(msg), msg);
 	sendLog(DEBUG, "update request (device %d to %d)", id, value);
 	json_object_put(errorMsg);
+}
+
+void sendRemovedRule(char * name) {
+
+	json_object * errorMsg = json_object_new_object();
+	json_object_object_add(errorMsg, "msgType",
+			json_object_new_string("rule_removed"));
+	json_object_object_add(errorMsg, "name", json_object_new_string(name));
+	char * msg = (char *) json_object_to_json_string(errorMsg);
+	sendNetMsg(RESTUP, strlen(msg), msg);
+	sendLog(DEBUG, "removed rule request (rule %s )", name);
+	json_object_put(errorMsg);
+
 }
 
 int startUpdateSender() {
