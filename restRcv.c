@@ -361,7 +361,7 @@ void transmitUpdate(int id, int value) {
 	json_object_put(errorMsg);
 }
 
-void sendRemovedRule(char * name) {
+void sendRemovedRule(const char * name) {
 
 	json_object * errorMsg = json_object_new_object();
 	json_object_object_add(errorMsg, "msgType",
@@ -374,45 +374,7 @@ void sendRemovedRule(char * name) {
 
 }
 
-int startUpdateSender() {
 
-	char *server_name = "134.214.167.59";
-	struct sockaddr_in serverSockAddr;
-	struct hostent *serverHostEnt;
-	long hostAddr;
-
-	bzero(&serverSockAddr, sizeof(serverSockAddr));
-	hostAddr = inet_addr(server_name);
-	if ((long) hostAddr != (long) -1)
-		bcopy(&hostAddr, &serverSockAddr.sin_addr, sizeof(hostAddr));
-	else {
-		serverHostEnt = gethostbyname(server_name);
-		if (serverHostEnt == NULL) {
-			sendLog(DEBUG, "update request prblm getHost");
-			return -1;
-		}
-		bcopy(serverHostEnt->h_addr, &serverSockAddr.sin_addr,
-				serverHostEnt->h_length);
-	}
-
-	serverSockAddr.sin_port = htons(421);
-	serverSockAddr.sin_family = AF_INET;
-
-	/* creation de la socket */
-	if ((socketRestServer = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		sendLog(DEBUG, "update request: socket creation failed");
-		return -1;
-	}
-
-	/* requete de connexion */
-	if (connect(socketRestServer, (struct sockaddr *) &serverSockAddr,
-			sizeof(serverSockAddr)) < 0) {
-		sendLog(DEBUG, "update request: connection request failed");
-		return -1;
-	}
-
-	return TRUE;
-}
 
 /*
  char * getNextJSONRequest() {

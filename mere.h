@@ -29,6 +29,7 @@ struct netMsg {
 };
 int sendNetMsg(int destination, int len, char * msg);
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata);
+void sendRemovedRule(const char * name);
 
 //init the socket for sending update
 int startUpdateSender();

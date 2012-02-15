@@ -14,6 +14,9 @@
 
 #define forward_address "127.0.0.1"
 #define forward_port 1337
+#define client_port 421
+
+struct sockaddr_in client_address;
 
 int clientIni(FILE * output)
 {
@@ -78,6 +81,34 @@ int clientIni(FILE * output)
 	return socketd;
 
 }
+
+int startUpdateSender() {
+
+	struct sockaddr_in server_address;
+
+  memset(&server_address,0,sizeof(struct sockaddr_in)); //clear struct
+	server_address.sin_family = AF_INET; //ipv4
+	if (inet_pton(AF_INET,inet_ntoa(client_address.sin_addr),&server_address.sin_addr) == -1) {
+		sendErr(WARNING,"inet_pton ",errno);
+		return -1;
+	}
+	server_address.sin_port = htons(client_port);
+	server_address.sin_family = AF_INET;
+
+	/* creation de la socket */
+	if ((socketRestServer = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		sendLog(DEBUG, "update request: socket creation failed");
+		return -1;
+	}
+	/* requete de connexion */
+	if (connect(socketRestServer, (struct sockaddr *) &server_address,
+			sizeof(server_address)) < 0) {
+		sendLog(DEBUG, "update request: connection request failed");
+		return -1;
+	}
+	return 0;
+}
+
 int initServer(listen_port){
 
 	int listen_socketd;
@@ -117,7 +148,6 @@ int initServer(listen_port){
 
 int waitClient(int listenSocket){
 
-	struct sockaddr_in client_address;
 	int request_socketd;
 
 	socklen_t client_size = sizeof(client_address);
