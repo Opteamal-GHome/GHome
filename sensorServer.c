@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <semaphore.h>
 
-#define listen_port 4421
+#define listen_port 80
 
 struct frame {
 	unsigned long long timestamp;
@@ -58,7 +58,7 @@ static void getSData(unsigned long long timestamp){
   int i;
   receive(socketSensorClient, (void *)data, 6);
   for (i=0; i<6; i++){
-    sendLog(DEBUG,"%x ", data[i]);
+    //sendLog(DEBUG,"%x ", data[i]);
   }
   received.infoType=data[0];
   memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));

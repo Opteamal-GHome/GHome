@@ -8,7 +8,7 @@
 #ifndef GESTION_CAPTEURS_H_
 #define GESTION_CAPTEURS_H_
 
-#define NB_SENSORS 10
+#define NB_SENSORS 50
 #define ID_SENSORS_SIZE 8
 
 #undef FALSE
