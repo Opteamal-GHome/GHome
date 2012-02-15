@@ -12,8 +12,6 @@
 #include <signal.h>
 #include <semaphore.h>
 
-#define listen_port 80
-
 struct frame {
 	unsigned long long timestamp;
 	char type;
@@ -76,7 +74,7 @@ static void getSData(unsigned long long timestamp){
       new_dev->timestamp=timestamp;
     }
   //look for a vacation in sensors table : 
-    for (i=0; i<NB_SENSORS; i++){
+    for (i=0; i<nb_sensors; i++){
       if(sensors[i].id==0){
         sensors[i].id=received.sensorId;
         sensors[i].type=received.sensorType;
@@ -123,7 +121,7 @@ void * startSensorServer(void * args) {
 
 	sendLog(DEBUG, "sensor reception thread started");
 	socketSensorClient = 0;
-	socketServer = initServer(listen_port);
+	socketServer = initServer(sensors_listen_port);
 	if (socketServer == -1) {
 		return NULL;
 	}

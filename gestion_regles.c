@@ -12,7 +12,6 @@ typedef struct json_object json_object;
 
 enum OPERATION_TYPE getOperator(const char * balise);
 
-int actuatorAlreadyUpdated[NB_SENSORS];
 int lastIndexUpdated;
 
 json_object * getRuleByName(const char * name);

@@ -1,7 +1,9 @@
 #include "mere.h"
 #include "config.h"
+#include "gestion_regles.h"
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define LINE_SIZE 80
@@ -60,6 +62,9 @@ int load_config(){
   for(fin=0; fin!=-1;){
     fin=parse_line(conf);
   }
+  //initialize sensors array :
+  sensors=malloc(nb_sensors*sizeof(struct DEVICE));
+  actuatorAlreadyUpdated=malloc(nb_sensors*sizeof(int));
   fclose(conf);
   return 0;
 }

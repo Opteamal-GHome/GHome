@@ -8,7 +8,7 @@
 #ifndef GESTION_CAPTEURS_H_
 #define GESTION_CAPTEURS_H_
 
-#define NB_SENSORS 50
+#include "config.h"
 #define ID_SENSORS_SIZE 8
 
 #undef FALSE
@@ -25,7 +25,7 @@ struct DEVICE { //Structure memoire
 	unsigned int timestamp;
 };
 
-struct DEVICE sensors[NB_SENSORS];
+struct DEVICE * sensors;
 
 struct DEVICE * getMemDevice(int id);
 void initMemory();

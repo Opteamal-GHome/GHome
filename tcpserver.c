@@ -14,7 +14,6 @@
 
 #define forward_address "127.0.0.1"
 #define forward_port 1337
-#define client_port 421
 
 struct sockaddr_in client_address;
 
@@ -92,7 +91,7 @@ int startUpdateSender() {
 		sendErr(WARNING,"inet_pton ",errno);
 		return -1;
 	}
-	server_address.sin_port = htons(client_port);
+	server_address.sin_port = htons(rest_connect_port);
 	server_address.sin_family = AF_INET;
 
 	/* creation de la socket */
