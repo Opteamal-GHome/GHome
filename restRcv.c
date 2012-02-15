@@ -41,22 +41,12 @@ void removeRuleRequest(json_object * requestJson);
 void sendAllRules();
 
 void * startRestRcv(void * args) {
-	sigset_t set;
 	int socketServer = 0;
 	char* JSONRequest;
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGTERM);
-	sigaddset(&set, SIGINT);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-	pthread_sigmask(SIG_BLOCK, &set, NULL);
-	//Those calls allow to uninstall the termination handler in this thread,
-	//it is however a rather inelegant way to do it,
-	//there must be some other way to achieve this.
-
 	socketRestClient = 0;
 	sendLog(DEBUG, "restServer reception thread started");
-	socketServer = initServer(listen_port);
+	socketServer = initServer(rest_listen_port);
 	if (socketServer == -1) {
 		return NULL;
 	}
@@ -85,8 +75,8 @@ void * startRestRcv(void * args) {
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
-		//Init rest Server Socket
-		//startUpdateSender();
+			//Init rest Server Socket
+			//startUpdateSender();
 
 			//checkRules();//TO DELETE
 
@@ -117,14 +107,13 @@ void * startRestRcv(void * args) {
 				gfree(JSONRequest);
 
 			}
-		
+
 			//Destroy socket for sender
 			/* fermeture de la connection */
 			//shutdown(socketRestServer, 2);
 			//close(socketRestServer);
 		}
 		sendLog(LOG, "restServer deconected");
-
 
 	}
 	return NULL;
@@ -266,14 +255,14 @@ void sendAllDevices() {
 	if (str != NULL) {
 	}
 
-	for (; i < NB_SENSORS; i++) {
+	for (; i < nb_sensors; i++) {
 		//We get all devices
 		for (;
-				i < NB_SENSORS
+				i < nb_sensors
 						&& getMemDeviceByIndex(i) == (struct DEVICE*) NULL;
 				i++) {
 		}
-		if (i < NB_SENSORS) {
+		if (i < nb_sensors) {
 			device = getMemDeviceByIndex(i);
 			addDeviceToMsg(device, rootMsg);
 		}
@@ -352,57 +341,31 @@ char * transformCharToString(char a) {
 
 void transmitUpdate(int id, int value) {
 	json_object * errorMsg = json_object_new_object();
-	char valueChar [10];
-	sprintf(valueChar,"%d",value);
+	char valueChar[10];
+	sprintf(valueChar, "%d", value);
 	json_object_object_add(errorMsg, "msgType",
 			json_object_new_string("device_updated"));
-	json_object_object_add(errorMsg, "data",
-			json_object_new_string(valueChar));
+	json_object_object_add(errorMsg, "data", json_object_new_string(valueChar));
 	char * msg = (char *) json_object_to_json_string(errorMsg);
 	sendNetMsg(RESTUP, strlen(msg), msg);
 	sendLog(DEBUG, "update request (device %d to %d)", id, value);
 	json_object_put(errorMsg);
 }
 
-int startUpdateSender() {
+void sendRemovedRule(const char * name) {
 
-	char *server_name = "134.214.167.59";
-	struct sockaddr_in serverSockAddr;
-	struct hostent *serverHostEnt;
-	long hostAddr;
+	json_object * errorMsg = json_object_new_object();
+	json_object_object_add(errorMsg, "msgType",
+			json_object_new_string("rule_removed"));
+	json_object_object_add(errorMsg, "name", json_object_new_string(name));
+	char * msg = (char *) json_object_to_json_string(errorMsg);
+	sendNetMsg(RESTUP, strlen(msg), msg);
+	sendLog(DEBUG, "removed rule request (rule %s )", name);
+	json_object_put(errorMsg);
 
-	bzero(&serverSockAddr, sizeof(serverSockAddr));
-	hostAddr = inet_addr(server_name);
-	if ((long) hostAddr != (long) -1)
-		bcopy(&hostAddr, &serverSockAddr.sin_addr, sizeof(hostAddr));
-	else {
-		serverHostEnt = gethostbyname(server_name);
-		if (serverHostEnt == NULL) {
-			sendLog(DEBUG, "update request prblm getHost");
-			return -1;
-		}
-		bcopy(serverHostEnt->h_addr, &serverSockAddr.sin_addr,
-				serverHostEnt->h_length);
-	}
-
-	serverSockAddr.sin_port = htons(421);
-	serverSockAddr.sin_family = AF_INET;
-
-	/* creation de la socket */
-	if ((socketRestServer = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		sendLog(DEBUG, "update request: socket creation failed");
-		return -1;
-	}
-
-	/* requete de connexion */
-	if (connect(socketRestServer, (struct sockaddr *) &serverSockAddr,
-			sizeof(serverSockAddr)) < 0) {
-		sendLog(DEBUG, "update request: connection request failed");
-		return -1;
-	}
-
-	return TRUE;
 }
+
+
 
 /*
  char * getNextJSONRequest() {

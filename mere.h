@@ -2,9 +2,10 @@
 #define __MERE_H
 
 #include <mqueue.h>
-#include "gthread.h"
-#include "gmem.h"
+#include <gthread.h>
+#include <gmem.h>
 #include "gestion_capteurs.h"
+#include "config.h"
 
 #ifdef	_STDLIB_H
   #define malloc gmalloc
@@ -35,6 +36,7 @@ struct netMsg {
 };
 int sendNetMsg(int destination, int len, char * msg);
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata);
+void sendRemovedRule(const char * name);
 
 //init the socket for sending update
 int startUpdateSender();

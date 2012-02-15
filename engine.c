@@ -5,17 +5,8 @@
 #include "mere.h"
 #include "gestion_regles.h"
 
+//This file should be merged with gestion_regle.c, or the other way around...
 void * startEngine(void * args){
-  sigset_t set;
-
-  sigemptyset(&set);
-  sigaddset(&set, SIGTERM);
-  sigaddset(&set, SIGINT);
-  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
-  pthread_sigmask(SIG_BLOCK,&set,NULL);
-  //Those calls allow to uninstall the termination handler in this thread,
-  //it is however a rather inelegant way to do it,
-  //there must be some other way to achieve this.
   sendLog(DEBUG,"engine thread started");
 
   //wait for the semaphore :
@@ -28,4 +19,3 @@ void * startEngine(void * args){
   }
 }
  
-

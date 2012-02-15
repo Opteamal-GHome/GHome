@@ -8,11 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <signal.h>
-#include "gthread.h"
-#define listen_port 4421
-
+#include <gthread.h>
 struct frame {
 	unsigned long long timestamp;
 	char type;
@@ -57,7 +54,7 @@ static void getSData(unsigned long long timestamp){
   int i;
   receive(socketSensorClient, (void *)data, 6);
   for (i=0; i<6; i++){
-    sendLog(DEBUG,"%x ", data[i]);
+    //sendLog(DEBUG,"%x ", data[i]);
   }
   received.infoType=data[0];
   memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
@@ -75,7 +72,7 @@ static void getSData(unsigned long long timestamp){
       new_dev->timestamp=timestamp;
     }
   //look for a vacation in sensors table : 
-    for (i=0; i<NB_SENSORS; i++){
+    for (i=0; i<nb_sensors; i++){
       if(sensors[i].id==0){
         sensors[i].id=received.sensorId;
         sensors[i].type=received.sensorType;
@@ -109,20 +106,10 @@ void * startSensorServer(void * args) {
 	int ret;
 	int socketServer = 0;
 	struct frame received;
-	sigset_t set;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGTERM);
-	sigaddset(&set, SIGINT);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-	pthread_sigmask(SIG_BLOCK, &set, NULL);
-	//Those calls allow to uninstall the termination handler in this thread,
-	//it is however a rather inelegant way to do it,
-	//there must be some other way to achieve this.
 
 	sendLog(DEBUG, "sensor reception thread started");
 	socketSensorClient = 0;
-	socketServer = initServer(listen_port);
+	socketServer = initServer(sensors_listen_port);
 	if (socketServer == -1) {
 		return NULL;
 	}
@@ -166,7 +153,7 @@ void * startSensorServer(void * args) {
 			}
 
 		}
-		sendLog(LOG, "Client deconected");
+		sendLog(LOG, "Sensor client deconected, waiting for reconection...");
 	}
 	return NULL;
 }

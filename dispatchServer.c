@@ -3,11 +3,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 #include <signal.h>
 #include <mqueue.h>
 #include <errno.h>
-#include "ipcs.h"
+#include <gipcs.h>
 
 static mqd_t dispatchReq;
 int sendNetMsg(int destination, int len, char * msg){
@@ -36,40 +35,13 @@ void * startDispatchServer(void * args) {
 	int stop = 0;
 	int msgSize;
 	struct netMsg received;
-	sigset_t set;
-  int stop=0;
-  int msgSize;
-  struct netMsg received;
-  sigset_t set;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGTERM);
-	sigaddset(&set, SIGINT);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-	pthread_sigmask(SIG_BLOCK, &set, NULL);
-	//Those calls allow to uninstall the termination handler in this thread,
-	//it is however a rather inelegant way to do it,
-	//there must be some other way to achieve this.
 
 	//get the message queue id :
 	sendLog(DEBUG, "dispatch thread started");
 	dispatchReq = *(mqd_t*) args;
-	for (stop = 0; stop != STOP;) {
-  sigemptyset(&set);
-  sigaddset(&set, SIGTERM);
-  sigaddset(&set, SIGINT);
-  pthread_sigmask(SIG_UNBLOCK,&set,NULL);
-  pthread_sigmask(SIG_BLOCK,&set,NULL);
-  //Those calls allow to uninstall the termination handler in this thread,
-  //it is however a rather inelegant way to do it,
-  //there must be some other way to achieve this.
   
-  //get the message queue id :
-  sendLog(DEBUG,"dispatch thread started");
-  dispatchReq=*(mqd_t*)args;
   for (stop=0; stop!=STOP;) {
     msgSize=gmq_receive(dispatchReq, (void*)&received, sizeof(struct netMsg), NULL);
-				sizeof(struct netMsg), NULL);
 		if (msgSize == -1) {
 			sendErr(DEBUG, "dispatch mq_receive", errno);
 			if (errno == EINTR) {

@@ -9,13 +9,13 @@
 #include <mqueue.h>
 #include <string.h>
 #include <errno.h>
-#include <pthread.h>
-#include "gthread.h"
-#include "ipcs.h"
+#include <gthread.h>
+#include <gipcs.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include "tcpserver.h"
 #include "mere.h"
+#include "config.h"
 
 #define ACCES 0660
 #define LOG_SIZE 150
@@ -202,7 +202,6 @@ int main(int argc, char * argv[]) {
 	if (mq_unlink(MQ_DISPATCH_NAME)) {
 		logErr(DEBUG, "mq_unlink dispatch", errno);
 	}
-
 	attrs.mq_msgsize = 200;
 	msgLog = gmq_open( MQ_LOG_NAME, O_EXCL|O_RDWR|O_CREAT,\
 			mqMode, &attrs);
@@ -213,10 +212,17 @@ int main(int argc, char * argv[]) {
 	snprintf(buff, MSG_SIZE, "Message box created with fd : %d", msgLog);
 	logMsg(DEBUG, buff);
 
+  logMsg(LOG,"Loading ghome.conf...");
+  if (load_config()==-1){
+    logMsg(WARNING,"No config file could be found, using default values");
+  } else {
+    logMsg(LOG,"Config file loaded");
+  }
+
 	attrs.mq_msgsize = sizeof(struct netMsg);
 	//Create a message queue to receive dispatch request :
-	dispatchReq = gmq_open( MQ_DISPATCH_NAME , /*O_NONBLOCK|*/O_EXCL|O_RDWR|O_CREAT,\
-			O_EXCL | O_RDWR | O_CREAT, mqMode, &attrs);
+	dispatchReq = gmq_open( MQ_DISPATCH_NAME , O_EXCL|O_RDWR|O_CREAT,\
+			mqMode, &attrs);
 	if (msgLog == -1) {
 		logErr(ERROR, "mq_open", errno);
 		return -1;
@@ -241,7 +247,7 @@ int main(int argc, char * argv[]) {
 		handler(0);
 	}
   if (gthread_create(&iet,STACKSZ,startEngine,NULL)!=0){
-		logErr(ERROR, "pthread_create failes for inference engine thread",
+		logErr(ERROR, "pthread_create failes for inference engine thread",errno);
     handler(0);
 	}
 

@@ -14,15 +14,15 @@ struct DEVICE * getMemDevice(int id){
 	struct DEVICE* sensor = NULL;
 	int i=0;
 	//Retourne un pointeur sur le sensor
-	for(; i<NB_SENSORS && (sensors[i].id != id) ; i++){ }
-	if ( i<NB_SENSORS )
+	for(; i<nb_sensors && (sensors[i].id != id) ; i++){ }
+	if ( i<nb_sensors )
 		 sensor = &sensors[i];
 	return sensor;
 }
 
 struct DEVICE * getMemDeviceByIndex(int index){
 	struct DEVICE* sensor = (struct DEVICE*) NULL;
-	if(index < NB_SENSORS && index >= 0 && sensors[index].id != 0){
+	if(index < nb_sensors && index >= 0 && sensors[index].id != 0){
 		sensor = &sensors[index];
 	}
 	return sensor;
@@ -38,7 +38,7 @@ void removeMemDevice(id){
 }
 
 int setValue(int id, int value){
-	if(id < NB_SENSORS && sensors[id].id != 0){
+	if(id < nb_sensors && sensors[id].id != 0){
 		sensors[id].value = value;
 	}else{
 		return FALSE;
@@ -46,11 +46,11 @@ int setValue(int id, int value){
 	return TRUE;
 }
 void initMemory(){
-	memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
+	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
 }
 
 void initTestMemory(){
-  memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
+  memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
 	sensors[0].id = 10;
 	sensors[0].role = 'S';
 	sensors[0].type = 'T';
