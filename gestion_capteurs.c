@@ -64,12 +64,6 @@ void initMemory(){
 	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
 }
 
-void freeMemory(){
-  SENSORS_SAFE();
-  free(sensors);
-  SENSORS_UNSAFE();
-}
-
 void initTestMemory(){
   SENSORS_SAFE();
   memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
