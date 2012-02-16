@@ -102,8 +102,14 @@ static void getOData() {
 	received.data = be32toh(received.data);
 	sendLog(DEBUG, "sensor ID : %d, sensor value : %d", received.sensorId,
 			received.data);
-	setValue(received.sensorId, received.data);
-	transmitUpdate(received.sensorId, received.data);
+	if ( setValue(received.sensorId, received.data) == TRUE )
+	{
+		transmitUpdate(received.sensorId, received.data);
+		sem_post(&sem);
+	}else{
+		sendLog(WARNING, "Impossible to update sensor value (sensor ID : %d, unexistant)!!", received.sensorId);
+	}
+	
 }
 
 void * startSensorServer(void * args) {

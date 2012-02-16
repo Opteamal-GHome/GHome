@@ -38,11 +38,19 @@ void removeMemDevice(id){
 }
 
 int setValue(int id, int value){
+	struct DEVICE * dev = getMemDevice(id);
+	if( dev != NULL){
+		dev->value = value;
+	}else{
+		return FALSE;
+	}
+	/*
 	if(id < NB_SENSORS && sensors[id].id != 0){
 		sensors[id].value = value;
 	}else{
 		return FALSE;
 	}
+	*/
 	return TRUE;
 }
 void initMemory(){

@@ -63,7 +63,7 @@ void * startRestRcv(void * args) {
 			socketServer);
 
 	//INIT Memory for test
-	initTestMemory();
+	//initTestMemory();
 
 	//json_object * jsonOb = json_object_from_file("initJSON.json");
 	//initMainRules(jsonOb); 
@@ -108,7 +108,7 @@ void * startRestRcv(void * args) {
 						if (success == TRUE) {
 							sendLog(DEBUG, "restServer request done");
 						} else {
-							sendLog(DEBUG, "restServer request ignored");
+							sendLog(WARNING, "restServer request ignored");
 						}
 
 					}
@@ -167,18 +167,22 @@ int requestTreatment(char *requestRule) {
 				json_object_put(requestJson);
 				return TRUE;
 				break;
+			case CHECK_RULES:
+				sendLog(DEBUG, "restServer Check Rule Request");
+				sem_post(&sem);
+				break;
 			default:
 				break;
 
 			}
 		} else {
-			sendLog(DEBUG, "Json request: field msgType missing");
+			sendLog(WARNING, "Json request: field msgType missing");
 		}
 		//If we come here, the requestJson is no longer needed
 		json_object_put(requestJson);
 	} else {
 		json_object_put(requestJson);
-		sendLog(DEBUG, "Json request not formated correctly");
+		sendLog(WARNING, "Json request not formated correctly");
 	}
 	return FALSE;
 }
@@ -213,10 +217,10 @@ int newRuleRequest(json_object * requestJson) {
 
 			return TRUE;
 		} else {
-			sendLog(DEBUG, "Rule %s not added (not coherent)", ruleName);
+			sendLog(WARNING, "Rule %s not added (not coherent)", ruleName);
 		}
 	} else {
-		sendLog(DEBUG, "Json request (NEW_RULE): rule missing");
+		sendLog(WARNING, "Json request (NEW_RULE): rule missing");
 	}
 
 	return FALSE;
@@ -241,7 +245,9 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = REMOVE_RULE;
 	} else if (strcmp(type, "getAllRules") == 0) {
 		request_Type = GET_ALL_RULES;
-	} else {
+	} else if (strcmp(type, "checkRules") == 0) {
+		request_Type = CHECK_RULES;
+	}else {
 		request_Type = UNKNOWN_REQUEST;
 	}
 	return request_Type;
