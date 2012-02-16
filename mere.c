@@ -139,7 +139,6 @@ void handler(int sigNb) {
 			logErr(WARNING, "joining failed", errno);
 		}
 	}
-	freeMemory();
 	logMsg(DEBUG, "Removing message queues");
 	if (mq_close(dispatchReq)) {
 		logErr(WARNING, "mq_close dispatchReq", errno);
