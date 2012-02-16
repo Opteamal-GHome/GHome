@@ -24,6 +24,8 @@ enum REQUEST_TYPE {
 	NEW_RULE,UNKNOWN_REQUEST, GET_ALL_DEVICES, GET_DEVICE, REMOVE_RULE, GET_ALL_RULES, CHECK_RULES
 };
 
+int * actuatorAlreadyUpdated; //allocated in config.c
+
 typedef struct json_object json_object;
 json_object *root;
 /*

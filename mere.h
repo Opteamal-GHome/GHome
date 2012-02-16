@@ -4,6 +4,7 @@
 #include <mqueue.h>
 #include <semaphore.h>
 #include "gestion_capteurs.h"
+#include "config.h"
 
 #define STOP 1
 #define ERR 2

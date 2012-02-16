@@ -8,7 +8,8 @@
 #ifndef GESTION_CAPTEURS_H_
 #define GESTION_CAPTEURS_H_
 
-#define NB_SENSORS 50
+#include "config.h"
+#include <semaphore.h>
 #define ID_SENSORS_SIZE 8
 
 #undef FALSE
@@ -25,7 +26,12 @@ struct DEVICE { //Structure memoire
 	unsigned int timestamp;
 };
 
-struct DEVICE sensors[NB_SENSORS];
+struct DEVICE * sensors;
+//Semaphore-based acces protection for sensors, we use macros to allow us to change
+//easily to and from posix/ghtreads semaphores.
+#define SENSORS_SAFE() sem_post(&sensorsSem)
+#define SENSORS_UNSAFE() sem_wait(&sensorsSem)
+sem_t sensorsSem;
 
 struct DEVICE * getMemDevice(int id);
 void initMemory();
@@ -33,6 +39,7 @@ void removeMemDevice(int);
 int setValue(int id, int value);
 struct DEVICE * getMemDeviceByIndex(int index);
 void initTestMemory();
+void freeMemory();
 
 #endif /* GESTION_CAPTEURS_H_ */
 

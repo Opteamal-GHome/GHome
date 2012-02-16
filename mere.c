@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include "tcpserver.h"
 #include "mere.h"
+#include "config.h"
+#include "gestion_capteurs.h"
 
 #define ACCES 0660
 #define LOG_SIZE 150
@@ -137,6 +139,7 @@ void handler(int sigNb) {
 			logErr(WARNING, "joining failed", errno);
 		}
 	}
+	freeMemory();
 	logMsg(DEBUG, "Removing message queues");
 	if (mq_close(dispatchReq)) {
 		logErr(WARNING, "mq_close dispatchReq", errno);
@@ -182,9 +185,6 @@ int main(int argc, char * argv[]) {
 	sigaction(SIGINT, &act, NULL);
 	sigaction(SIGTERM, &act, NULL);
 
-	//Make the device's structure content safe
-	initMemory();
-
 	//create log mailbox :
 	if (mq_unlink(MQ_LOG_NAME)) {
 		logErr(DEBUG, "mq_unlink log", errno);
@@ -192,7 +192,6 @@ int main(int argc, char * argv[]) {
 	if (mq_unlink(MQ_DISPATCH_NAME)) {
 		logErr(DEBUG, "mq_unlink dispatch", errno);
 	}
-
 	attrs.mq_msgsize = 200;
 	msgLog = mq_open(MQ_LOG_NAME, /*O_NONBLOCK|*/O_EXCL | O_RDWR | O_CREAT,
 			mqMode, &attrs);
@@ -202,6 +201,13 @@ int main(int argc, char * argv[]) {
 	}
 	snprintf(buff, MSG_SIZE, "Message box created with fd : %d", msgLog);
 	logMsg(DEBUG, buff);
+
+  logMsg(LOG,"Loading ghome.conf...");
+  if (load_config()==-1){
+    logMsg(WARNING,"No config file could be found, using default values");
+  } else {
+    logMsg(LOG,"Config file loaded");
+  }
 
 	attrs.mq_msgsize = sizeof(struct netMsg);
 	//Create a message queue to receive dispatch request :
@@ -216,6 +222,14 @@ int main(int argc, char * argv[]) {
 	if (sem_init(&sem, 0, 0) == -1) {
 		logErr(ERROR, "sem_init", errno);
 	}
+	//Create semaphore for the sensors acces :
+	if (sem_init(&sensorsSem, 0, 1) == -1) {
+		logErr(ERROR, "sem_init", errno);
+	}
+	
+	//Init the device's structure content
+	initMemory();
+	
 	//create various threads :
 	//Start the thread with the defaults arguments, using the startSensorServer
 	//function as entry point, with no arguments to this function.

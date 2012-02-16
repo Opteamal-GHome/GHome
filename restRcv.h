@@ -18,7 +18,6 @@
 #include "tcpserver.h"
 #include "gestion_regles.h"
 
-#define listen_port 8080
 #define MAX_MSG_LENGTH 500
 
 /*

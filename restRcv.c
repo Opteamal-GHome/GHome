@@ -55,7 +55,7 @@ void * startRestRcv(void * args) {
 
 	socketRestClient = 0;
 	sendLog(DEBUG, "restServer reception thread started");
-	socketServer = initServer(listen_port);
+	socketServer = initServer(rest_listen_port);
 	if (socketServer == -1) {
 		return NULL;
 	}
@@ -170,6 +170,7 @@ int requestTreatment(char *requestRule) {
 			case CHECK_RULES:
 				sendLog(DEBUG, "restServer Check Rule Request");
 				sem_post(&sem);
+				return TRUE;
 				break;
 			default:
 				break;
@@ -270,14 +271,14 @@ void sendAllDevices() {
 	if (str != NULL) {
 	}
 
-	for (; i < NB_SENSORS; i++) {
+	for (; i < nb_sensors; i++) {
 		//We get all devices
 		for (;
-				i < NB_SENSORS
+				i < nb_sensors
 						&& getMemDeviceByIndex(i) == (struct DEVICE*) NULL;
 				i++) {
 		}
-		if (i < NB_SENSORS) {
+		if (i < nb_sensors) {
 			device = getMemDeviceByIndex(i);
 			addDeviceToMsg(device, rootMsg);
 		}

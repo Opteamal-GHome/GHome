@@ -14,17 +14,21 @@ struct DEVICE * getMemDevice(int id){
 	struct DEVICE* sensor = NULL;
 	int i=0;
 	//Retourne un pointeur sur le sensor
-	for(; i<NB_SENSORS && (sensors[i].id != id) ; i++){ }
-	if ( i<NB_SENSORS )
+  SENSORS_SAFE();
+	for(; i<nb_sensors && (sensors[i].id != id) ; i++){ }
+	if ( i<nb_sensors )
 		 sensor = &sensors[i];
+  SENSORS_UNSAFE();
 	return sensor;
 }
 
 struct DEVICE * getMemDeviceByIndex(int index){
 	struct DEVICE* sensor = (struct DEVICE*) NULL;
-	if(index < NB_SENSORS && index >= 0 && sensors[index].id != 0){
+  SENSORS_SAFE();
+	if(index < nb_sensors && index >= 0 && sensors[index].id != 0){
 		sensor = &sensors[index];
 	}
+  SENSORS_UNSAFE();
 	return sensor;
 }
 
@@ -45,20 +49,33 @@ int setValue(int id, int value){
 		return FALSE;
 	}
 	/*
-	if(id < NB_SENSORS && sensors[id].id != 0){
+  SENSORS_SAFE();
+	if(id < nb_sensors && sensors[id].id != 0){
 		sensors[id].value = value;
+    SENSORS_UNSAFE();
 	}else{
+    SENSORS_UNSAFE();
 		return FALSE;
 	}
 	*/
 	return TRUE;
 }
 void initMemory(){
-	memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
+  SENSORS_SAFE();
+  sensors = malloc(nb_sensors*sizeof(struct DEVICE));
+	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
+  SENSORS_UNSAFE();
+}
+
+void freeMemory(){
+  SENSORS_SAFE();
+  free(sensors);
+  SENSORS_UNSAFE();
 }
 
 void initTestMemory(){
-  memset(sensors,0,NB_SENSORS*sizeof(struct DEVICE));
+  SENSORS_SAFE();
+  memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
 	sensors[0].id = 10;
 	sensors[0].role = 'S';
 	sensors[0].type = 'T';
@@ -83,6 +100,7 @@ void initTestMemory(){
 	sensors[4].role = 'A';
 	sensors[4].type = 'I';
 	sensors[4].value = 42;
+  SENSORS_UNSAFE();
 }
 
 
