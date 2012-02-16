@@ -39,7 +39,6 @@ void removeMemDevice(int);
 int setValue(int id, int value);
 struct DEVICE * getMemDeviceByIndex(int index);
 void initTestMemory();
-void freeMemory();
 
 #endif /* GESTION_CAPTEURS_H_ */
 
