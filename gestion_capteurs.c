@@ -61,10 +61,7 @@ int setValue(int id, int value){
 	return TRUE;
 }
 void initMemory(){
-  SENSORS_SAFE();
-  sensors = malloc(nb_sensors*sizeof(struct DEVICE));
 	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
-  SENSORS_UNSAFE();
 }
 
 void freeMemory(){
