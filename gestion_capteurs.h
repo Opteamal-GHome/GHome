@@ -29,8 +29,8 @@ struct DEVICE { //Structure memoire
 struct DEVICE * sensors;
 //Semaphore-based acces protection for sensors, we use macros to allow us to change
 //easily to and from posix/ghtreads semaphores.
-#define SENSORS_SAFE() sem_post(&sensorsSem)
-#define SENSORS_UNSAFE() sem_wait(&sensorsSem)
+#define SENSORS_SAFE() sem_wait(&sensorsSem)
+#define SENSORS_UNSAFE() sem_post(&sensorsSem)
 sem_t sensorsSem;
 
 struct DEVICE * getMemDevice(int id);
