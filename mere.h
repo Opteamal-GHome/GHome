@@ -7,11 +7,6 @@
 #include "gestion_capteurs.h"
 #include "config.h"
 
-#ifdef	_STDLIB_H
-  #define malloc gmalloc
-  #define free gfree
-#endif
-#define free gfree
 #define STOP 1
 #define ERR 2
 #define INFO 3

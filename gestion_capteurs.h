@@ -9,6 +9,7 @@
 #define GESTION_CAPTEURS_H_
 
 #include "config.h"
+#include <gthread.h>
 #define ID_SENSORS_SIZE 8
 
 #undef FALSE
@@ -26,6 +27,11 @@ struct DEVICE { //Structure memoire
 };
 
 struct DEVICE * sensors;
+//Semaphore-based acces protection for sensors, we use macros to allow us to change
+//easily to and from posix/ghtreads semaphores.
+#define SENSORS_SAFE() gsem_give(&sensorsSem)
+#define SENSORS_UNSAFE() gsem_take(&sensorsSem)
+gsem_t sensorsSem;
 
 struct DEVICE * getMemDevice(int id);
 void initMemory();

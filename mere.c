@@ -16,6 +16,7 @@
 #include "tcpserver.h"
 #include "mere.h"
 #include "config.h"
+#include "gestion_capteurs.h"
 
 #define ACCES 0660
 #define LOG_SIZE 150
@@ -230,6 +231,8 @@ int main(int argc, char * argv[]) {
 
 	//Create semaphore for the engine :
   gsem_init(&sem, 0);
+	//Create semaphore for the sensors acces :
+	gsem_init(&sensorsSem,1); 
 	//create various threads :
 	//Start the thread with the defaults arguments, using the startSensorServer
 	//function as entry point, with no arguments to this function.
@@ -286,8 +289,6 @@ int main(int argc, char * argv[]) {
 			logMsg(WARNING, "Received unexpected message");
 		}
 	}
-
-
 	//Exit
 	exit(0);
 }
