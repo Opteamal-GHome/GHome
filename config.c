@@ -56,6 +56,10 @@ int load_config(){
   conf=fopen(CONFIG_FILE,"r");
   if (conf==NULL){
     sendErr(WARNING,"config file fopen ",errno);
+    //initialize sensors array :
+    sensors=malloc(nb_sensors*sizeof(struct DEVICE));
+    actuatorAlreadyUpdated=malloc(nb_sensors*sizeof(int));
+    fclose(conf);
     return -1;
   }
   for(fin=0; fin!=-1;){

@@ -42,6 +42,13 @@ void removeMemDevice(id){
 }
 
 int setValue(int id, int value){
+	struct DEVICE * dev = getMemDevice(id);
+	if( dev != NULL){
+		dev->value = value;
+	}else{
+		return FALSE;
+	}
+	/*
   SENSORS_SAFE();
 	if(id < nb_sensors && sensors[id].id != 0){
 		sensors[id].value = value;
@@ -50,12 +57,11 @@ int setValue(int id, int value){
     SENSORS_UNSAFE();
 		return FALSE;
 	}
+	*/
 	return TRUE;
 }
 void initMemory(){
-  SENSORS_SAFE();
 	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
-  SENSORS_UNSAFE();
 }
 
 void initTestMemory(){

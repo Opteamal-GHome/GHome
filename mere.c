@@ -190,9 +190,6 @@ int main(int argc, char * argv[]) {
 	sigaction(SIGINT, &act, NULL);
 	sigaction(SIGTERM, &act, NULL);
 
-	//Make the device's structure content safe
-	initMemory();
-
   //Initialize gthread environment :
   gthread_init();
 
@@ -233,6 +230,10 @@ int main(int argc, char * argv[]) {
   gsem_init(&sem, 0);
 	//Create semaphore for the sensors acces :
 	gsem_init(&sensorsSem,1); 
+	
+	//Init the device's structure content
+	initMemory();
+	
 	//create various threads :
 	//Start the thread with the defaults arguments, using the startSensorServer
 	//function as entry point, with no arguments to this function.

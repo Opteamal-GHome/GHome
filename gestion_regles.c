@@ -83,7 +83,7 @@ void insertRuleIntoArray(json_object * rootArray, json_object * rule,
 	} else {
 		int indice;
 		int nbRulesToMove = nbRules - position;
-		printf("Nb rules to move: %d\n", nbRulesToMove);
+		//printf("Nb rules to move: %d\n", nbRulesToMove);
 
 		for (indice = 0; indice < nbRulesToMove; indice++) {
 			json_object * ruleToMove = json_object_array_get_idx(rootArray,
@@ -113,7 +113,7 @@ json_object * convertToJson(char * string) {
 	jsonString = json_tokener_parse(string);
 
 	if (!jsonString) {
-		sendLog(DEBUG, "Invalid JSON msg");
+		sendLog(WARNING, "Invalid JSON msg");
 		return (json_object *) FALSE;
 	}
 	return jsonString;
@@ -239,7 +239,7 @@ int checkRuleCoherence(json_object * rule) {
 								if (getMemDevice(atoi(idCaptor))
 										== (struct DEVICE *) -1) {
 									sendLog(
-											DEBUG,
+											WARNING,
 											"Rule Incoherence: sensor:%s inexistant",
 											idCaptor);
 									json_object * errorMsg =
@@ -271,7 +271,7 @@ int checkRuleCoherence(json_object * rule) {
 
 					} else {
 						//Operande manquante
-						sendLog(DEBUG, "Rule Incoherence: operande missing");
+						sendLog(WARNING, "Rule Incoherence: operande missing");
 						json_object * errorMsg = json_object_new_object();
 
 						json_object_object_add(errorMsg, "msgType",
@@ -297,7 +297,7 @@ int checkRuleCoherence(json_object * rule) {
 							json_object_object_get(condition, "date"));
 					if (date == NULL) {
 						//Operande manquante
-						sendLog(DEBUG, "Rule Incoherence: date missing");
+						sendLog(WARNING, "Rule Incoherence: date missing");
 						json_object * errorMsg = json_object_new_object();
 
 						json_object_object_add(errorMsg, "msgType",
@@ -316,7 +316,7 @@ int checkRuleCoherence(json_object * rule) {
 					}
 					break;
 				case UNKNOWN:
-					sendLog(DEBUG, "Rule Incoherence: operation type unknown");
+					sendLog(WARNING, "Rule Incoherence: operation type unknown");
 
 					json_object * errorMsg = json_object_new_object();
 					json_object_object_add(errorMsg, "msgType",
@@ -338,7 +338,7 @@ int checkRuleCoherence(json_object * rule) {
 
 			} else {
 				//Aucune condition
-				sendLog(DEBUG, "Rule Incoherence: condition missing");
+				sendLog(WARNING, "Rule Incoherence: condition missing");
 
 				json_object * errorMsg = json_object_new_object();
 				json_object_object_add(errorMsg, "msgType",
@@ -368,7 +368,7 @@ int checkRuleCoherence(json_object * rule) {
 					&& (int) getMemDevice(
 							atoi(json_object_get_string(actuator))) != FALSE) {
 			} else {
-				sendLog(DEBUG, "Rule Incoherence: actuator %d missing",
+				sendLog(WARNING, "Rule Incoherence: actuator %d missing",
 						atoi(json_object_get_string(actuator)));
 
 				json_object * errorMsg = json_object_new_object();
@@ -393,7 +393,7 @@ int checkRuleCoherence(json_object * rule) {
 			}
 		}
 	} else {
-		sendLog(DEBUG, "Rule Incoherence: no actions");
+		sendLog(WARNING, "Rule Incoherence: no actions");
 		json_object * errorMsg = json_object_new_object();
 		json_object_object_add(errorMsg, "msgType",
 				json_object_new_string("R_newRule"));
