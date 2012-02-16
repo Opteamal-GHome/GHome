@@ -74,15 +74,19 @@ static void getSData(unsigned long long timestamp){
       new_dev->timestamp=timestamp;
     }
   //look for a vacation in sensors table : 
+
+    SENSORS_SAFE();
     for (i=0; i<nb_sensors; i++){
       if(sensors[i].id==0){
         sensors[i].id=received.sensorId;
         sensors[i].type=received.sensorType;
         sensors[i].timestamp=timestamp;
         sem_post(&sem);
+        SENSORS_UNSAFE();
         return; 
       }
     }
+    SENSORS_UNSAFE();
     sendLog(WARNING,"No more room in sensor table");
     break;
   case 'R' :

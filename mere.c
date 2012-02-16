@@ -16,6 +16,7 @@
 #include "tcpserver.h"
 #include "mere.h"
 #include "config.h"
+#include "gestion_capteurs.h"
 
 #define ACCES 0660
 #define LOG_SIZE 150
@@ -221,6 +222,10 @@ int main(int argc, char * argv[]) {
 
 	//Create semaphore for the engine :
 	if (sem_init(&sem, 0, 0) == -1) {
+		logErr(ERROR, "sem_init", errno);
+	}
+	//Create semaphore for the sensors acces :
+	if (sem_init(&sensorsSem, 0, 1) == -1) {
 		logErr(ERROR, "sem_init", errno);
 	}
 	//create various threads :
