@@ -89,7 +89,8 @@ int startUpdateSender() {
 
   memset(&server_address,0,sizeof(struct sockaddr_in)); //clear struct
 	server_address.sin_family = AF_INET; //ipv4
-	if (inet_pton(AF_INET,inet_ntoa(client_address.sin_addr),&server_address.sin_addr) == -1) {
+	if (inet_pton(AF_INET,/*inet_ntoa(client_address.sin_addr)*/"127.0.0.1",\
+		&server_address.sin_addr) == -1) {
 		sendErr(WARNING,"inet_pton ",errno);
 		return -1;
 	}
@@ -191,7 +192,7 @@ int receive(int socket, char * buff, int size){
       sendLog(DEBUG,"Received %d bytes.",ret);
       /*
       for (i=0; i<ret; i++){
-        sendLog(DEBUG,"%hhx ",buff[i]);
+        //sendLog(DEBUG,"%hhx ",buff[i]);
       }
       */
     }

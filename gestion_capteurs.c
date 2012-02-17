@@ -62,7 +62,7 @@ int setValue(int id, int value){
 }
 
 char getSensorRole(char type){
-	if ( type == 'I'){
+	if ( type == 'E'){
 		return 'A';
 	}
 	return 'S';
@@ -90,7 +90,7 @@ void initTestMemory(){
 	sensors[2].type = 'H';
 	sensors[2].value = 42;
 
-	sensors[3].id = 1;
+	sensors[3].id = 13;
 	sensors[3].role = 'A';
 	sensors[3].type = 'I';
 	sensors[3].value = 42;
