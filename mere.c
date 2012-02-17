@@ -230,6 +230,7 @@ int main(int argc, char * argv[]) {
   gsem_init(&sem, 0);
 	//Create semaphore for the sensors acces :
 	gsem_init(&sensorsSem,1); 
+  gsem_give(&sensorsSem);
 	
 	//Init the device's structure content
 	initMemory();
