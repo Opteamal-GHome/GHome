@@ -222,7 +222,7 @@ int main(int argc, char * argv[]) {
 		logErr(ERROR, "sem_init", errno);
 	}
 	//Create semaphore for the sensors acces :
-	if (sem_init(&sensorsSem, 0, 1) == -1) {
+	if (sem_init(&sensorsSem, 0, 0) == -1) {
 		logErr(ERROR, "sem_init", errno);
 	}
 	sem_post(&sensorsSem); // sem_init doesn't works (it set to 0)

@@ -81,6 +81,7 @@ static void getSData(unsigned long long timestamp){
         sensors[i].id=received.sensorId;
         sensors[i].type=received.sensorType;
         sensors[i].timestamp=timestamp;
+        sensors[i].role = getSensorRole(received.sensorType);
         sem_post(&sem);
         SENSORS_UNSAFE();
         return; 
