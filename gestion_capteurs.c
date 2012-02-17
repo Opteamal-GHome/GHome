@@ -6,7 +6,7 @@
  */
 #include "gestion_capteurs.h"
 #include <string.h>
-
+#include <stdio.h>
 /**
  * Renvoie la structure associée du capteur d'ID id ou -1 si il n'existe pas
  */

@@ -225,6 +225,7 @@ int main(int argc, char * argv[]) {
 	if (sem_init(&sensorsSem, 0, 1) == -1) {
 		logErr(ERROR, "sem_init", errno);
 	}
+	sem_post(&sensorsSem); // sem_init doesn't works (it set to 0)
 	
 	//Init the device's structure content
 	initMemory();

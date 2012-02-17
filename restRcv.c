@@ -193,7 +193,6 @@ int requestTreatment(char *requestRule) {
 int newRuleRequest(json_object * requestJson) {
 	int priority;
 	json_object * rule;
-
 	priority = atoi(
 			json_object_get_string(
 					json_object_object_get(requestJson, "priority")));
