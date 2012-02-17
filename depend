@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "Checking dependencies..."
+if !(ldd ./ghome | grep "not found") then
+  echo "Dependencies checked."
+  exit 0
+else 
+  echo "You won't be able to run ghome until you have installed the required libraries"
+  echo "You can find libgmem and libgthread at https://github.com/Opteamal-GHome/"
+  exit 1
+fi

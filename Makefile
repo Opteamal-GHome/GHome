@@ -9,7 +9,7 @@ OBJ=tcpserver.o mere.o sensorServer.o gestion_capteurs.o gestion_regles.o dispat
 		restRcv.o engine.o config.o
 LIBS=-lgmem -lgthread -lrt -ljson
 
-$(EXE): $(OBJ)
+$(EXE): $(OBJ) check
 	@echo building $<
 	$(EDL)  -o $(EXE) $(EDLFLAGS) $(OBJ) $(LIBS)
 	@echo done
@@ -29,5 +29,7 @@ clean:
 	@rm -f *.out
 	@echo cleaned.
 
+check :
+	@./depend	
 coffee : clean
 	@echo No!
