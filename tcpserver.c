@@ -177,7 +177,7 @@ void closeClient(int clientSock){
 int receive(int socket, char * buff, int size){
   size_t ret = 0;
   size_t bytesRcv = 0;
-  int i=0;
+  //int i=0;
   for (bytesRcv=0; bytesRcv<size; ){
     ret=grecv(socket,(void*)(buff+bytesRcv),size-ret,0);
     bytesRcv+=ret;
