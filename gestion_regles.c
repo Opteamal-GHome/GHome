@@ -236,8 +236,9 @@ int checkRuleCoherence(json_object * rule) {
 								char idCaptor[ID_SENSORS_SIZE];
 								strcpy(idCaptor, (char *) operande[i] + 1);
 								//On cherche si le capteur existe en memoire
+
 								if (getMemDevice(atoi(idCaptor))
-										== (struct DEVICE *) -1) {
+										== (struct DEVICE *) NULL) {
 									sendLog(
 											WARNING,
 											"Rule Incoherence: sensor:%s inexistant",

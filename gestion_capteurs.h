@@ -39,6 +39,7 @@ void removeMemDevice(int);
 int setValue(int id, int value);
 struct DEVICE * getMemDeviceByIndex(int index);
 void initTestMemory();
+char getSensorRole(char type);
 
 #endif /* GESTION_CAPTEURS_H_ */
 

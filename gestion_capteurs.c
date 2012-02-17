@@ -6,7 +6,7 @@
  */
 #include "gestion_capteurs.h"
 #include <string.h>
-
+#include <stdio.h>
 /**
  * Renvoie la structure associée du capteur d'ID id ou -1 si il n'existe pas
  */
@@ -60,6 +60,14 @@ int setValue(int id, int value){
 	*/
 	return TRUE;
 }
+
+char getSensorRole(char type){
+	if ( type == 'I'){
+		return 'A';
+	}
+	return 'S';
+}
+
 void initMemory(){
 	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
 }

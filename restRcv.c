@@ -64,7 +64,7 @@ void * startRestRcv(void * args) {
 		int msgLength = 0;
 		int msgLengthReceived = 0;
 		int lengthSizeReceived = 0;
-		sendLog(LOG, "restServer wait for client");
+		sendLog(DEBUG, "restServer wait for client");
 		socketRestClient = waitClient(socketServer);
 		if (socketRestClient == -1) {
 			sendErr(WARNING, "restServer, wait failed", errno);
@@ -184,7 +184,6 @@ int requestTreatment(char *requestRule) {
 int newRuleRequest(json_object * requestJson) {
 	int priority;
 	json_object * rule;
-
 	priority = atoi(
 			json_object_get_string(
 					json_object_object_get(requestJson, "priority")));
