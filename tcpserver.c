@@ -171,7 +171,7 @@ int waitClient(int listenSocket){
 
 void closeClient(int clientSock){
 
-  sendLog(DEBUG,"Client deconected");
+  sendLog(DEBUG,"Client disconected");
   shutdown(clientSock, SHUT_RDWR);
 	close(clientSock);
 }

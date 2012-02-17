@@ -54,7 +54,7 @@ void * startRestRcv(void * args) {
 			socketServer);
 
 	//INIT Memory for test
-	//initTestMemory();
+	initTestMemory();
 
 	//json_object * jsonOb = json_object_from_file("initJSON.json");
 	//initMainRules(jsonOb); 
@@ -113,7 +113,7 @@ void * startRestRcv(void * args) {
 			//shutdown(socketRestServer, 2);
 			//close(socketRestServer);
 		}
-		sendLog(LOG, "restServer deconected");
+		sendLog(LOG, "restServer disconected");
 
 	}
 	return NULL;
@@ -160,6 +160,7 @@ int requestTreatment(char *requestRule) {
 				break;
 			case CHECK_RULES:
 				sendLog(DEBUG, "restServer Check Rule Request");
+        printf("restSever Ck rule\n");
 				gsem_give(&sem);
 				return TRUE;
 				break;

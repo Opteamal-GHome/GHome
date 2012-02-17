@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#define SERVEURNAME "134.214.166.120" //"127.0.0.1"//
+#define SERVEURNAME "127.0.0.1"
 #define SERVEURSock 80
 
 int to_server_socket = -1;
@@ -127,10 +127,10 @@ int main(void) {
 		buffer[a] = '\0';
 		printf("Lut nb %d:%s\n", a, buffer);
 */
-		printf("Nb write len:%d : %d\n",
+		printf("Nb write len:%lu : %d\n",
 				write(to_server_socket, (void*) &msgLenghtIndian3, sizeof(msgLenghtIndian3)),
 				msgLength3);
-		printf("Nb write:%d\n", write(to_server_socket, jsonExample3,msgLength3));
+		printf("Nb write:%lu\n", write(to_server_socket, jsonExample3,msgLength3));
 
 		//write(to_server_socket,(void*) &(msgLength), sizeof(msgLength));
 		//printf("Nb write:%d\n",write(to_server_socket, jsonExample, msgLength));
