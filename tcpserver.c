@@ -144,6 +144,7 @@ int initServer(listen_port){
 		return -1;
 	}
 	sendLog(DEBUG,"Server listenning on port %d",ntohs(port));
+	//printf("Server listenning on port %d\n",ntohs(port));
   return listen_socketd;
 }
 
@@ -161,8 +162,8 @@ int waitClient(int listenSocket){
     return -1;	
   }
   sendLog(DEBUG,"new connection"); 
-  sendLog(DEBUG,"\tremote address : %s", inet_ntoa(client_address.sin_addr));
   sendLog(DEBUG,"\tremote port : %d", ntohs(client_address.sin_port));
+  sendLog(DEBUG,"\tremote address : %s",inet_ntoa(client_address.sin_addr));
 
 	return request_socketd;
 }
@@ -188,9 +189,11 @@ int receive(int socket, char * buff, int size){
       return -1;
     }else{
       sendLog(DEBUG,"Received %d bytes.",ret);
+      /*
       for (i=0; i<ret; i++){
         sendLog(DEBUG,"%hhx ",buff[i]);
       }
+      */
     }
   }
   return ret;
