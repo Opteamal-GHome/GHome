@@ -355,16 +355,27 @@ char * transformCharToString(char a) {
 }
 
 void transmitUpdate(int id, int value) {
-	json_object * errorMsg = json_object_new_object();
-	char valueChar[10];
-	sprintf(valueChar, "%d", value);
-	json_object_object_add(errorMsg, "msgType",
-			json_object_new_string("device_updated"));
-	json_object_object_add(errorMsg, "data", json_object_new_string(valueChar));
-	char * msg = (char *) json_object_to_json_string(errorMsg);
-	sendNetMsg(RESTUP, strlen(msg), msg);
-	sendLog(DEBUG, "update request (device %d to %d)", id, value);
-	json_object_put(errorMsg);
+	struct DEVICE * device = getMemDevice(id);
+	if(device != NULL){
+		json_object * errorMsg = json_object_new_object();
+		char valueChar[10];
+		sprintf(valueChar, "%d", value);
+		char idChar[10];
+		sprintf(idChar, "%d", id);
+		json_object_object_add(errorMsg, "msgType",
+				json_object_new_string("device_updated"));
+				json_object_object_add(errorMsg, "id", json_object_new_string(idChar));
+		json_object_object_add(errorMsg, "data", json_object_new_string(valueChar));
+		json_object_object_add(errorMsg, "type", json_object_new_string(transformCharToString(device->type)));
+		json_object_object_add(errorMsg, "role", json_object_new_string(transformCharToString(device->role)));
+		char * msg = (char *) json_object_to_json_string(errorMsg);
+		sendNetMsg(RESTUP, strlen(msg), msg);
+		sendLog(DEBUG, "update request (device:%d type:%c role:%c to %d)", id,device->type,device->role, value);
+		json_object_put(errorMsg);
+	}else{
+		sendLog(WARNING, "update request failed: device %d inexistant", id);
+	}
+	
 }
 
 void sendRemovedRule(const char * name) {
