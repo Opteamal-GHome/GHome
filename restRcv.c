@@ -28,8 +28,6 @@
 #include <string.h>
 #include <json/json.h>
 
-typedef struct json_object json_object;
-
 enum REQUEST_TYPE getRequestType(const char * type);
 int requestTreatment(char *requestRule);
 void sendAllDevices();

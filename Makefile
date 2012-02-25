@@ -1,5 +1,5 @@
 #Variables utilisées :
-CC=gcc -g#Compilateur
+CC=gcc -g #Compilateur
 EDL=gcc -g #Linker
 CCFLAGS=-Wall -m32 #Options de compilations
 EDLFLAGS=-Wall -m32
@@ -9,7 +9,9 @@ OBJ=tcpserver.o mere.o sensorServer.o gestion_capteurs.o gestion_regles.o dispat
 		restRcv.o engine.o config.o
 LIBS=-lgmem -lgthread -lrt -ljson
 
-$(EXE): $(OBJ) check
+all : $(EXE) check
+
+$(EXE): $(OBJ) 
 	@echo building $<
 	$(EDL)  -o $(EXE) $(EDLFLAGS) $(OBJ) $(LIBS)
 	@echo done
@@ -21,6 +23,7 @@ $(EXE): $(OBJ) check
 	
 clean: 
 	@echo -n cleaning repository... 
+	@rm -f ./$(EXE)
 	@rm -f *.o
 	@rm -f .*.swp
 	@rm -f *~

@@ -191,7 +191,7 @@ int main(int argc, char * argv[]) {
 	sigaction(SIGTERM, &act, NULL);
 
   //Initialize gthread environment :
-  gthread_init();
+  gthread_init(NULL);
 
   //destroy olds log mailboxes :
 	if (mq_unlink(MQ_LOG_NAME)) {

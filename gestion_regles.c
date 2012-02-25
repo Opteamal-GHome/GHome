@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include "mere.h"
 #include "gestion_regles.h"
-typedef struct json_object json_object;
 
 enum OPERATION_TYPE getOperator(const char * balise);
 
