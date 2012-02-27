@@ -63,7 +63,8 @@ int sendLog(enum logLvl level, char * format, ...) {
 		perror("sendLog");
 		va_end(args);
 		return -1;
-	}va_end(args);
+	}
+  va_end(args);
 	return 0;
 }
 
@@ -77,31 +78,38 @@ int sendErr(enum logLvl level, char * info, int errnb) {
 	}
 	return 0;
 }
-
+static int ckprintf(int level, char * format, ...){
+  int ret=0;
+  va_list args;
+  if ( level < verbose + 2){ //+2 so that we always display log and warning msgs
+    va_start(args,format);
+    ret=vprintf(format,args);
+    va_end(args);
+  }
+  return ret; 
+}
 static int logMsg(enum logLvl level, char * msg) {
 
 	switch (level) {
 	case LOG:
 		fprintf(logFile, "[LOG] ");
-		printf(BOLD(GREEN("[LOG] ")));
+		ckprintf(level,BOLD(GREEN("[LOG] ")));
 		break;
 	case WARNING:
 		fprintf(logFile, "[WARN] ");
-		printf(BOLD(CYAN("[WARN] ")));
+		ckprintf(level,BOLD(CYAN("[WARN] ")));
 		break;
 	case ERROR:
 		fprintf(logFile, "[ERROR] ");
-		printf(BOLD(RED("[ERROR] ")));
+		ckprintf(level,BOLD(RED("[ERROR] ")));
 		break;
 	case DEBUG:
 		fprintf(logFile, "[DEBUG] ");
-		printf(BOLD(BLUE("[DEBUG] ")));
+		ckprintf(level,BOLD(BLUE("[DEBUG] ")));
 		break;
 	}
 	fprintf(logFile, "%s\n", msg);
-	if (verbose >= 1 || level == ERROR) {
-		printf("%s\n", msg);
-	}
+  ckprintf(level,"%s\n", msg);
 	return 0;
 }
 static int logErr(enum logLvl level, char * log, int err) {
@@ -159,6 +167,41 @@ void handler(int sigNb) {
   logMsg(DEBUG,"Closing file descriptors");
   exit(0);
 }
+
+static int parseArgs(int argc, char * argv[]){
+  int i=1;
+  int j=0;
+
+  switch (argc){
+    case 1:
+      return 0;
+    case 2:
+      break;
+    default :
+      return -1;
+  }
+
+  if (argv[i][0]!='-'){
+    return -1;
+  }
+
+  for (j=1; j<4; j++){
+    switch (argv[i][j]){
+      case '\0':
+        return j>1 ? 0 : -1;
+        break;
+      case 'v':
+        verbose++;
+        break;
+      default :
+        return -1;
+        break;
+    }
+  } 
+
+  return argc>1 ? -1 : 0;
+}
+
 int main(int argc, char * argv[]) {
 	//init
 	char buff[MSG_SIZE];
@@ -167,14 +210,18 @@ int main(int argc, char * argv[]) {
 	size_t msgSize;
 	mode_t mqMode = S_IRWXO; //Allows everything for everyone
 	//TODO : change the mode to user.
-	struct mq_attr attrs = { .mq_maxmsg = 20, //beyond 10 msgs one might need root acces
-			};
+	struct mq_attr attrs = { 
+    .mq_maxmsg = 20, //beyond 10 msgs one might need root acces
+  };
 	//threads control :
 
 	struct mlog received;
 	struct sigaction act = { .sa_handler=handler, .sa_flags = 0, };
-	//temp :
-	verbose = 1;
+
+  if (parseArgs(argc, argv)!=0){
+    printf(BOLD(CYAN("[WARN]"))" Bad option.\n");
+    verbose=0;
+  }
 	//ipcs IDs :
 	msgLog = 0;
 

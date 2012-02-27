@@ -20,8 +20,8 @@ int socketRestClient;
 gsem_t sem; 
 enum logLvl{
   LOG,
-  WARNING,
   ERROR,
+  WARNING,
   DEBUG
 };
 struct netMsg {
