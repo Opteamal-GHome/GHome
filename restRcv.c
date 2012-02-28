@@ -51,11 +51,6 @@ void * startRestRcv(void * args) {
 	sendLog(DEBUG, "restServer initialized, socket descriptor : %d",
 			socketServer);
 
-	//INIT Memory for test
-	initTestMemory();
-
-	//json_object * jsonOb = json_object_from_file("initJSON.json");
-	//initMainRules(jsonOb); 
 	initMainRules(NULL); //TODO SET THE DEFAULT FILE
 
 	for (; socketRestClient != -1;) {
@@ -69,7 +64,6 @@ void * startRestRcv(void * args) {
 			sendErr(WARNING, "restServer, wait failed", errno);
 			return NULL;
 		}
-    startUpdateSender(client);
 		sendLog(LOG, "restServer connected");
 		//Connection update
 
