@@ -14,9 +14,7 @@ void * startEngine(void * args){
     gsem_take(&sem);
     //For test purposes (a sem_post is done on every sensor activity in sensorServer):
     sendLog(DEBUG,"Engine: checking rules");
-    printf("Before check rule\n");
     checkRules();
-    printf("After check rule\n");
     sendLog(DEBUG,"Engine: rules checked");
   }
 }
