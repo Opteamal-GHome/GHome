@@ -61,7 +61,7 @@ void * startDispatchServer(void * args) {
 			break;
 		case RESTUP:
 			//Init rest Server Socket
-			if(startUpdateSender() != -1){
+			if(startUpdateSender(client) != -1){
 				sendLog(DEBUG, "Sending message to sensors up");
 				transmit(socketRestServer, received.data, received.msgSize);
 				//Destroy socket for sender

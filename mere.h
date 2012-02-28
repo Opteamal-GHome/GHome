@@ -4,6 +4,7 @@
 #include <mqueue.h>
 #include <gthread.h>
 #include <gmem.h>
+#include <netinet/in.h>
 #include "gestion_capteurs.h"
 #include "config.h"
 
@@ -17,6 +18,7 @@
 int socketSensorClient;
 int socketRestServer;
 int socketRestClient;
+struct sockaddr_in client;
 gsem_t sem; 
 enum logLvl{
   LOG,
@@ -33,8 +35,6 @@ int sendNetMsg(int destination, int len, char * msg);
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata);
 void sendRemovedRule(const char * name);
 
-//init the socket for sending update
-int startUpdateSender();
 //send an update to rest
 void transmitUpdate(int,int);
 
