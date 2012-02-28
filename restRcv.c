@@ -62,19 +62,20 @@ void * startRestRcv(void * args) {
 		int msgLength = 0;
 		int msgLengthReceived = 0;
 		int lengthSizeReceived = 0;
+
 		sendLog(DEBUG, "restServer wait for client");
-		socketRestClient = waitClient(socketServer);
+		socketRestClient = waitClient(socketServer,&client);
 		if (socketRestClient == -1) {
 			sendErr(WARNING, "restServer, wait failed", errno);
 			return NULL;
 		}
+    startUpdateSender(client);
 		sendLog(LOG, "restServer connected");
 		//Connection update
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
 			//Init rest Server Socket
-			//startUpdateSender();
 
 			//checkRules();//TO DELETE
 

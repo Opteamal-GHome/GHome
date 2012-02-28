@@ -128,7 +128,7 @@ void * startSensorServer(void * args) {
 			socketServer);
 	for (;;) {
 		sendLog(DEBUG, "sensorServer waiting for a client");
-		socketSensorClient = waitClient(socketServer);
+		socketSensorClient = waitClient(socketServer,NULL);
 		if (socketSensorClient == -1) {
 			return NULL;
 		}

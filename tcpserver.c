@@ -17,7 +17,6 @@
 #define forward_address "127.0.0.1"
 #define forward_port 1337
 
-struct sockaddr_in client_address;
 
 int clientIni(FILE * output)
 {
@@ -83,13 +82,13 @@ int clientIni(FILE * output)
 
 }
 
-int startUpdateSender() {
+int startUpdateSender(struct sockaddr_in client_address) {
 
 	struct sockaddr_in server_address;
 
   memset(&server_address,0,sizeof(struct sockaddr_in)); //clear struct
 	server_address.sin_family = AF_INET; //ipv4
-	if (inet_pton(AF_INET,/*inet_ntoa(client_address.sin_addr)*/"127.0.0.1",\
+	if (inet_pton(AF_INET, inet_ntoa(client_address.sin_addr),\
 		&server_address.sin_addr) == -1) {
 		sendErr(WARNING,"inet_pton ",errno);
 		return -1;
@@ -149,9 +148,10 @@ int initServer(listen_port){
   return listen_socketd;
 }
 
-int waitClient(int listenSocket){
+int waitClient(int listenSocket, struct sockaddr_in * client){
 
 	int request_socketd;
+  struct sockaddr_in client_address;
 
 	socklen_t client_size = sizeof(client_address);
 
@@ -166,6 +166,9 @@ int waitClient(int listenSocket){
   sendLog(DEBUG,"\tremote port : %d", ntohs(client_address.sin_port));
   sendLog(DEBUG,"\tremote address : %s",inet_ntoa(client_address.sin_addr));
 
+  if (client!=NULL){
+    memcpy(client,&client_address,sizeof(struct sockaddr_in));
+  }
 	return request_socketd;
 }
 
