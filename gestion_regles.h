@@ -88,7 +88,7 @@ void resetMainRules();
 /*
 * Change la priorite des regles
 */
-void changeRulesPriorities(json_object* rulesArray);
+void changeRulesPriorities(json_object * rulesArray);
 
 #endif /* GESTION_REGLES_H_ */
 
