@@ -23,6 +23,7 @@ void insertRuleIntoArray(json_object * rootArray, json_object * rule,
 		int position);
 int removeRuleByName(char * name);
 int json_get_Real_Length(json_object * rootArray);
+int changeRulePriority(char * name, int priority);
 
 void initMainRules(json_object * initSource) {
 
@@ -148,8 +149,20 @@ int changeRulePriority(char * name, int priority) {
 	return TRUE;
 }
 
-int changeRulesPriority(json_object* rulesArray){
- return 0;
+void changeRulesPriorities(json_object* rulesArray){
+	const char * currentRuleName;
+	if (name != NULL) {
+		for (i = 0; i < json_object_array_length(rulesArray); i++) {
+			json_object *rule = json_object_array_get_idx(rulesArray, i);
+			if (rule != NULL) {
+				currentRuleName = json_object_get_string( rule );
+				changeRulePriority( currentRuleName, i);
+				
+			}else{
+				sendLog(WARNING, "Engine: change rule priority null error");
+			}
+		}
+	}
 }
 
 int removeRuleByIndex(size_t index) {
