@@ -35,6 +35,7 @@ int newRuleRequest(json_object * requestJson);
 int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
 char * transformCharToString(char a);
 void removeRuleRequest(json_object * requestJson);
+static void sendGetRules();
 //char * getNextJSONRequest();
 void sendAllRules();
 
@@ -66,6 +67,7 @@ void * startRestRcv(void * args) {
 		}
 		sendLog(LOG, "restServer connected");
 		//Connection update
+    sendGetRules(); //Ask for existing rules.
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
@@ -380,10 +382,18 @@ void sendRemovedRule(const char * name) {
 	sendNetMsg(RESTUP, strlen(msg), msg);
 	sendLog(DEBUG, "removed rule request (rule %s )", name);
 	json_object_put(errorMsg);
-
 }
 
+static void sendGetRules() {
 
+	json_object * getMsg = json_object_new_object();
+	json_object_object_add(getMsg, "msgType",
+			json_object_new_string("get_rules"));
+	char * msg = (char *) json_object_to_json_string(getMsg);
+	sendNetMsg(RESTUP, strlen(msg), msg);
+	sendLog(DEBUG, "get all rules request");
+	json_object_put(getMsg);
+}
 
 /*
  char * getNextJSONRequest() {
