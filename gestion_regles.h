@@ -21,7 +21,7 @@ enum OPERATION_TYPE {
 };
 
 enum REQUEST_TYPE {
-	NEW_RULE,UNKNOWN_REQUEST, GET_ALL_DEVICES, GET_DEVICE, REMOVE_RULE, GET_ALL_RULES, CHECK_RULES
+	NEW_RULE,UNKNOWN_REQUEST, GET_ALL_DEVICES, GET_DEVICE, REMOVE_RULE, GET_ALL_RULES, CHECK_RULES, RESET_RULES
 };
 
 int * actuatorAlreadyUpdated; //allocated in config.c
@@ -79,6 +79,11 @@ void checkRules();
  * Transforme la chaine de caractere passée en parametre et la convertie en json_object *
  */
 json_object * convertToJson(char * string);
+
+/*
+ * Efface toutes les regles en mémoire
+ */
+void resetMainRules();
 
 #endif /* GESTION_REGLES_H_ */
 

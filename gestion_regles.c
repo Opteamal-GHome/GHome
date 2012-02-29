@@ -33,6 +33,11 @@ void initMainRules(json_object * initSource) {
 	}
 }
 
+void resetMainRules(){
+	json_object_put(root);
+	root = json_object_new_array();
+}
+
 void addRules(json_object * rules, int positionDepart) {
 	int i;
 	for (i = 0; i < json_object_array_length(rules); i++) {
