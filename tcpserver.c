@@ -101,10 +101,13 @@ int startUpdateSender(struct sockaddr_in client_address) {
 		sendLog(DEBUG, "update request: socket creation failed");
 		return -1;
 	}
+  sendLog(DEBUG,"new connection to remote rest :"); 
+  sendLog(DEBUG,"\tremote port : %d", ntohs(server_address.sin_port));
+  sendLog(DEBUG,"\tremote address : %s",inet_ntoa(server_address.sin_addr));
 	/* requete de connexion */
 	if (connect(socketRestServer, (struct sockaddr *) &server_address,
 			sizeof(server_address)) < 0) {
-		sendLog(DEBUG, "update request: connection request failed");
+		sendErr(DEBUG, "update request: connection request failed",errno);
 		return -1;
 	}
 	return 0;
@@ -152,9 +155,9 @@ int waitClient(int listenSocket, struct sockaddr_in * client){
 
 	int request_socketd;
   struct sockaddr_in client_address;
-
 	socklen_t client_size = sizeof(client_address);
 
+  memset(&client_address,0,sizeof(struct sockaddr_in));
   request_socketd = gaccept(listenSocket,\
     (struct sockaddr *) &client_address, &client_size);
   if (request_socketd == -1)
