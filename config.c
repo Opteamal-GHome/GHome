@@ -12,6 +12,7 @@
 #define SENSORS_LISTEN_PORT 8080
 #define REST_LISTEN_PORT 8081
 #define REST_CONNECT_PORT 421
+#define ENGINE_CHECK 2
 #ifndef NB_SENSORS
   #define NB_SENSORS 20
 #endif
@@ -23,6 +24,10 @@ static int parse_line(FILE * conf_file){
   if(fgets(line,80,conf_file)==NULL){
     //Probably EOF
     return -1;
+  }
+  if(line[0]=='#' || line[0]=='\n'){
+    //this line is a comment
+    return 0;
   }
   if(sscanf(line,"%24s %u",key,&value)!=2){
     return -1; //ligne invalide
@@ -43,6 +48,10 @@ static int parse_line(FILE * conf_file){
     nb_sensors=value;
     return 1;    
   }
+  if (strncmp(key,"AUTO_CHECK_PERIOD",24)==0){
+    engine_period=value;
+    return 1;    
+  }
   return -1;
 }
 int load_config(){
@@ -53,6 +62,7 @@ int load_config(){
   rest_listen_port=REST_LISTEN_PORT;
   rest_connect_port=REST_CONNECT_PORT;
   nb_sensors=NB_SENSORS;
+  engine_period=ENGINE_CHECK;
   conf=fopen(CONFIG_FILE,"r");
   if (conf==NULL){
     sendErr(WARNING,"config file fopen ",errno);
