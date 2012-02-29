@@ -150,13 +150,14 @@ int changeRulePriority(char * name, int priority) {
 }
 
 void changeRulesPriorities(json_object* rulesArray){
-	const char * currentRuleName;
-	if (name != NULL) {
+	int i;
+	char * currentRuleName;
+	if (rulesArray != NULL) {
 		for (i = 0; i < json_object_array_length(rulesArray); i++) {
 			json_object *rule = json_object_array_get_idx(rulesArray, i);
 			if (rule != NULL) {
-				currentRuleName = json_object_get_string( rule );
-				changeRulePriority( currentRuleName, i);
+				currentRuleName = (char *) json_object_get_string( rule );
+				changeRulePriority( (char *) currentRuleName, i);
 				
 			}else{
 				sendLog(WARNING, "Engine: change rule priority null error");
