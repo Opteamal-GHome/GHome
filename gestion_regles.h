@@ -21,7 +21,7 @@ enum OPERATION_TYPE {
 };
 
 enum REQUEST_TYPE {
-	NEW_RULE,UNKNOWN_REQUEST, GET_ALL_DEVICES, GET_DEVICE, REMOVE_RULE, GET_ALL_RULES, CHECK_RULES
+	NEW_RULE,UNKNOWN_REQUEST, GET_ALL_DEVICES, GET_DEVICE, REMOVE_RULE, GET_ALL_RULES, CHECK_RULES, RESET_RULES
 };
 
 int * actuatorAlreadyUpdated; //allocated in config.c
@@ -49,6 +49,9 @@ int checkMainRulesCoherence();
  */
 int addRule(json_object *regle, int position);
 
+/*
+ * Ajoute si possible les regles (si valide)
+ */
 void addRules (json_object * rules,int positionDepart);
 /*
  * Ajout les regles a partir de position dans les regles internes si elles sont valides (capteur existants et nom inutilisé)
@@ -72,7 +75,15 @@ int removeRuleByIndex(size_t index);
  */
 void checkRules();
 
+/*
+ * Transforme la chaine de caractere passée en parametre et la convertie en json_object *
+ */
 json_object * convertToJson(char * string);
+
+/*
+ * Efface toutes les regles en mémoire
+ */
+void resetMainRules();
 
 #endif /* GESTION_REGLES_H_ */
 

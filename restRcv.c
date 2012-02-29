@@ -51,7 +51,7 @@ void * startRestRcv(void * args) {
 	sendLog(DEBUG, "restServer initialized, socket descriptor : %d",
 			socketServer);
 
-	initMainRules(NULL); //TODO SET THE DEFAULT FILE
+	initMainRules(NULL); 
 
 	for (; socketRestClient != -1;) {
 		int msgLength = 0;
@@ -153,8 +153,13 @@ int requestTreatment(char *requestRule) {
 				break;
 			case CHECK_RULES:
 				sendLog(DEBUG, "restServer Check Rule Request");
-        printf("restSever Ck rule\n");
+        //printf("restSever Ck rule\n");
 				gsem_give(&sem);
+				return TRUE;
+				break;
+			case RESET_RULES:
+				sendLog(DEBUG, "restServer Reset Rules Request");
+				resetMainRules();
 				return TRUE;
 				break;
 			default:
@@ -232,6 +237,8 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = GET_ALL_RULES;
 	} else if (strcmp(type, "checkRules") == 0) {
 		request_Type = CHECK_RULES;
+	} else if (strcmp(type, "resetRules") == 0) {
+		request_Type = RESET_RULES;
 	}else {
 		request_Type = UNKNOWN_REQUEST;
 	}
