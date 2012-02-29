@@ -162,6 +162,12 @@ int requestTreatment(char *requestRule) {
 				resetMainRules();
 				return TRUE;
 				break;
+			case CHANGE_RULES_PRIORITIES:
+				sendLog(DEBUG, "restServer Change Rules Priorities Request");
+				changeRulesPriorities(requestJson);
+				gsem_give(&sem);
+				return TRUE;
+				break;
 			default:
 				break;
 
@@ -239,6 +245,8 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = CHECK_RULES;
 	} else if (strcmp(type, "resetRules") == 0) {
 		request_Type = RESET_RULES;
+	} else if (strcmp(type, "changeRulesPriorities") == 0) {
+		request_Type = CHANGE_RULES_PRIORITIES;
 	}else {
 		request_Type = UNKNOWN_REQUEST;
 	}
