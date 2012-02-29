@@ -60,7 +60,7 @@ static void getSData(unsigned long long timestamp){
   memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
   received.sensorType=data[5];
   received.sensorId=be32toh(received.sensorId);
-  sendLog(DEBUG,"\ninfo type : '%c', sensor ID : %x, sensor type : '%c'",\
+  sendLog(DEBUG,"info type : '%c', sensor ID : %x, sensor type : '%c'",\
       received.infoType, received.sensorId, received.sensorType);
   switch (received.infoType){
   case 'A' :
@@ -101,8 +101,8 @@ static void getOData() {
 	receive(socketSensorClient, (void *) &received, 8);
 	received.sensorId = be32toh(received.sensorId);
 	received.data = be32toh(received.data);
-	sendLog(DEBUG, "sensor ID : %d, sensor value : %d", received.sensorId,
-			received.data);
+	//sendLog(DEBUG, "sensor ID : %d, sensor value : %d", received.sensorId,
+//			received.data);
 	if ( setValue(received.sensorId, received.data) == TRUE )
 	{
 		transmitUpdate(received.sensorId, received.data);
@@ -110,7 +110,6 @@ static void getOData() {
 	}else{
 		sendLog(WARNING, "Impossible to update sensor value (sensor ID : %d, unexistant)!!", received.sensorId);
 	}
-	
 }
 
 void * startSensorServer(void * args) {
@@ -162,7 +161,6 @@ void * startSensorServer(void * args) {
 							received.type);
 				}
 			}
-
 		}
 		sendLog(LOG, "Sensor client deconected, waiting for reconection...");
 	}
