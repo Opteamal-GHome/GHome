@@ -133,6 +133,25 @@ int removeRuleByName(char * name) {
 	return TRUE;
 }
 
+int changeRulePriority(char * name, int priority) {
+	json_object *rule;
+
+	rule = getRuleByName(name);
+	if (rule != NULL) {
+		json_object * ruleToMove = json_object_get(rule);//To increment the count
+		removeRuleByName(name);
+		
+		if(addRule(ruleToMove, priority) == FALSE){
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+int changeRulesPriority(json_object* rulesArray){
+ return 0;
+}
+
 int removeRuleByIndex(size_t index) {
 
 	int nbRules = json_object_array_length(root);
