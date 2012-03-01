@@ -25,21 +25,21 @@
 #include <string.h>
 
 #define SERVEURNAME "127.0.0.1"
-#define SERVEURSock 80
+#define SERVEURSock 8080
 
 int to_server_socket = -1;
 //0
-char * jsonExample3= "{ \"msgType\":\"checkRules\"}";
-char * jsonExample322 =
+char * jsonExample333= "{ \"msgType\":\"checkRules\"}";
+char * jsonExample3 =
 		"{ \"msgType\":\"newRule\","
 				"\"priority\":\"1\","
 				"\"rule\":{ \
 \"ruleName\":\"Rule 2\", \
 \"conditions\": [ \
 { \
-\"type\" : \"inf\", \
-\"leftOp\": \"1\", \
-\"rightOp\" : \"@10\" \
+\"type\" : \"equ\", \
+\"leftOp\": \"@3\", \
+\"rightOp\" : \"1\" \
 }],\n \
 \"actions\" : [ \
 { \

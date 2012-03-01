@@ -33,6 +33,7 @@ struct netMsg {
 };
 int sendNetMsg(int destination, int len, char * msg);
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata);
+int sendVFrame(unsigned long long int stimestamp, int codePostal);
 void sendRemovedRule(const char * name);
 
 //send an update to rest

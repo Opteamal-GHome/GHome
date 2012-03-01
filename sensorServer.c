@@ -25,7 +25,6 @@ struct oData {
 };
 
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata) {
-	int i;
 	char buff[20];
 	uint64_t timestamp;
 	int sensorId;
@@ -40,7 +39,23 @@ int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata) {
 	memcpy(buff + sizeof(long long) + 1 + sizeof(int), &data, sizeof(int));
 	buff[17] = '\n';
 	sendNetMsg(SENSORS, 18, buff);
-	for (i = 0; i < 18; i++) {
+	return 0;
+}
+
+int sendVFrame(unsigned long long int stimestamp, int codePostal) {
+	int i;
+	char buff[15];
+	uint64_t timestamp;
+	int data;
+	sendLog(DEBUG, "Sending V Frame");
+	timestamp = htobe64(stimestamp);
+	data = htobe32(codePostal);
+	memcpy(buff, &timestamp, sizeof(long long));
+	buff[sizeof(long long)] = 'V';
+	memcpy(buff + sizeof(long long) + 1, &data, sizeof(int));
+	buff[13] = '\n';
+	sendNetMsg(SENSORS, 14, buff);
+	for (i = 0; i < 14; i++) {
 		sendLog(DEBUG, "%hhx ", buff[i]);
 	}
 	return 0;
@@ -60,7 +75,7 @@ static void getSData(unsigned long long timestamp){
   memcpy(&received.sensorId, &data[1], sizeof(received.sensorId));
   received.sensorType=data[5];
   received.sensorId=be32toh(received.sensorId);
-  sendLog(DEBUG,"info type : '%c', sensor ID : %x, sensor type : '%c'",\
+  sendLog(DEBUG,"info type : '%c', sensor ID : %u, sensor type : '%c'",\
       received.infoType, received.sensorId, received.sensorType);
   switch (received.infoType){
   case 'A' :
