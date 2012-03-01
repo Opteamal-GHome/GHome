@@ -39,6 +39,7 @@ static void removeRuleRequest(json_object * requestJson);
 static void changeRulesPrioritiesRequest(json_object * requestJson);
 //char * getNextJSONRequest();
 static void sendAllRules();
+void meteoRequest(json_object * requestJson);
 
 void * startRestRcv(void * args) {
 	int socketServer = 0;
@@ -171,6 +172,11 @@ static int requestTreatment(char *requestRule) {
 				gsem_give(&sem);
 				return TRUE;
 				break;
+			case METEO:
+				sendLog(DEBUG, "restServer meteo Request");
+				meteoRequest(requestJson);
+				return TRUE;
+				break;
 			default:
 				break;
 
@@ -250,6 +256,8 @@ static enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = RESET_RULES;
 	} else if (strcmp(type, "changeRulesPriorities") == 0) {
 		request_Type = CHANGE_RULES_PRIORITIES;
+	} else if (strcmp(type, "meteo") == 0) {
+		request_Type = METEO;
 	}else {
 		request_Type = UNKNOWN_REQUEST;
 	}
@@ -398,6 +406,13 @@ static void changeRulesPrioritiesRequest(json_object * requestJson){
 	changeRulesPriorities(rulesPriorityTable);
 	saveRules("RULES_STATUS.json");
 	
+}
+
+void meteoRequest(json_object *requestJson){
+	
+	char * codePostal = (char *) json_object_get_string(
+	json_object_object_get(requestJson, "codePostal"));
+	//sendVFrame(42, atoi(codePostal));
 }
 /*
 static void sendGetRules() {

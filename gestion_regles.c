@@ -590,7 +590,7 @@ int doAction(json_object * action) {
 	if (updateActuator(atoi(actuatorName)) == TRUE) {
 		sendLog(DEBUG, "Request to set actuator: %s to %s", actuatorName,
 				actuatorValue);
-		sendOFrame(42, atoi(actuatorName), atoi(actuatorValue)); //TODO Timestamp
+		sendOFrame(42, atoi(actuatorName), atoi(actuatorValue)); //Timestamp
 		return TRUE;
 	}
 	return FALSE;
