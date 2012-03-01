@@ -134,22 +134,12 @@ void handler(int sigNb) {
 	}
 	//ask for application termination
 	logMsg(LOG, "Exiting application");
-  /* TODO : Imlement cancel and join functions
 	logMsg(DEBUG, "Canceling threads");
-	pthread_cancel(rrt);
-	pthread_cancel(dst);
-	pthread_cancel(iet);
-	ret = pthread_cancel(sst);
-	if (ret == -1) {
-		logErr(WARNING, "Canceling sst thread failed", errno);
-	} else {
-		logMsg(DEBUG, "Joining sst thread");
-		ret = pthread_join(sst, NULL);
-		if (ret == -1) {
-			logErr(WARNING, "joining failed", errno);
-		}
-	}
-  */
+
+	gthread_cancel(rrt);
+	gthread_cancel(dst);
+	gthread_cancel(iet);
+
 	logMsg(DEBUG, "Removing message queues");
 	if (mq_close(dispatchReq)) {
 		logErr(WARNING, "mq_close dispatchReq", errno);
