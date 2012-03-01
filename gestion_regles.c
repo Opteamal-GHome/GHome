@@ -23,6 +23,7 @@ void insertRuleIntoArray(json_object * rootArray, json_object * rule,
 		int position);
 int removeRuleByName(char * name);
 int json_get_Real_Length(json_object * rootArray);
+int changeRulePriority(char * name, int priority);
 
 void initMainRules(json_object * initSource) {
 
@@ -131,6 +132,42 @@ int removeRuleByName(char * name) {
 		return removeRule(rule);
 	}
 	return TRUE;
+}
+
+int changeRulePriority(char * name, int priority) {
+	json_object *rule;
+
+	rule = getRuleByName(name);
+	if (rule != NULL) {
+		json_object * ruleToMove = json_object_get(rule);//To increment the count
+		removeRuleByName(name);
+		
+		if(addRule(ruleToMove, priority) == FALSE){
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+void changeRulesPriorities(json_object* rulesArray){
+	int i;
+	char * currentRuleName;
+	json_object* rulesArrayCpy = json_object_get(rulesArray);
+	if (rulesArray != NULL) {
+		for (i = 0; i < json_object_array_length(rulesArrayCpy); i++) {
+			json_object *rule = json_object_array_get_idx(rulesArrayCpy, i);
+			if (rule != NULL) {
+				currentRuleName = (char *) json_object_get_string( rule );
+				if(changeRulePriority( (char *) currentRuleName, i) == FALSE){
+					sendLog(WARNING, "Engine: change rule priority change error");
+				}
+				
+			}else{
+				sendLog(WARNING, "Engine: change rule priority null error");
+			}
+		}
+	}
+	json_object_put(rulesArrayCpy);//free
 }
 
 int removeRuleByIndex(size_t index) {

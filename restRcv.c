@@ -36,6 +36,7 @@ int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
 char * transformCharToString(char a);
 void removeRuleRequest(json_object * requestJson);
 static void sendGetRules();
+void changeRulesPrioritiesRequest(json_object * requestJson);
 //char * getNextJSONRequest();
 void sendAllRules();
 
@@ -164,6 +165,12 @@ int requestTreatment(char *requestRule) {
 				resetMainRules();
 				return TRUE;
 				break;
+			case CHANGE_RULES_PRIORITIES:
+				sendLog(DEBUG, "restServer Change Rules Priorities Request");
+				changeRulesPrioritiesRequest(requestJson);
+				gsem_give(&sem);
+				return TRUE;
+				break;
 			default:
 				break;
 
@@ -241,6 +248,8 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 		request_Type = CHECK_RULES;
 	} else if (strcmp(type, "resetRules") == 0) {
 		request_Type = RESET_RULES;
+	} else if (strcmp(type, "changeRulesPriorities") == 0) {
+		request_Type = CHANGE_RULES_PRIORITIES;
 	}else {
 		request_Type = UNKNOWN_REQUEST;
 	}
@@ -384,8 +393,13 @@ void sendRemovedRule(const char * name) {
 	json_object_put(errorMsg);
 }
 
+void changeRulesPrioritiesRequest(json_object * requestJson){
+	json_object * rulesPriorityTable = json_object_object_get(requestJson, "rules");
+	changeRulesPriorities(rulesPriorityTable);
+	saveRules("RULES_STATUS.json");
+	
+}
 static void sendGetRules() {
-
 	json_object * getMsg = json_object_new_object();
 	json_object_object_add(getMsg, "msgType",
 			json_object_new_string("get_rules"));
