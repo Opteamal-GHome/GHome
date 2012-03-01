@@ -28,17 +28,17 @@
 #include <string.h>
 #include <json/json.h>
 
-enum REQUEST_TYPE getRequestType(const char * type);
-int requestTreatment(char *requestRule);
-void sendAllDevices();
-int newRuleRequest(json_object * requestJson);
-int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
-char * transformCharToString(char a);
-void removeRuleRequest(json_object * requestJson);
-static void sendGetRules();
-void changeRulesPrioritiesRequest(json_object * requestJson);
+static enum REQUEST_TYPE getRequestType(const char * type);
+static int requestTreatment(char *requestRule);
+static void sendAllDevices();
+static int newRuleRequest(json_object * requestJson);
+static int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
+static char * transformCharToString(char a);
+static void removeRuleRequest(json_object * requestJson);
+//static void sendGetRules();
+static void changeRulesPrioritiesRequest(json_object * requestJson);
 //char * getNextJSONRequest();
-void sendAllRules();
+static void sendAllRules();
 
 void * startRestRcv(void * args) {
 	int socketServer = 0;
@@ -68,7 +68,7 @@ void * startRestRcv(void * args) {
 		}
 		sendLog(LOG, "restServer connected");
 		//Connection update
-    sendGetRules(); //Ask for existing rules.
+    //sendGetRules(); //Ask for existing rules.
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
@@ -116,7 +116,7 @@ void * startRestRcv(void * args) {
 }
 
 //Treat JSON request from REST
-int requestTreatment(char *requestRule) {
+static int requestTreatment(char *requestRule) {
 
 	json_object * requestJson = convertToJson(requestRule);
 	if ((int) requestJson != FALSE) {
@@ -189,7 +189,7 @@ int requestTreatment(char *requestRule) {
 /*
  * Add the rule of requestJson if it can be added to the system rules and notify REST whether it's possible or not.
  */
-int newRuleRequest(json_object * requestJson) {
+static int newRuleRequest(json_object * requestJson) {
 	int priority;
 	json_object * rule;
 	priority = atoi(
@@ -225,14 +225,14 @@ int newRuleRequest(json_object * requestJson) {
 	return FALSE;
 }
 
-void removeRuleRequest(json_object * requestJson) {
+static void removeRuleRequest(json_object * requestJson) {
 	char * ruleName = (char *) json_object_get_string(
 			json_object_object_get(requestJson, "ruleName"));
 	removeRuleByName(ruleName);
 	saveRules("RULES_STATUS.json");
 }
 
-enum REQUEST_TYPE getRequestType(const char * type) {
+static enum REQUEST_TYPE getRequestType(const char * type) {
 	enum REQUEST_TYPE request_Type;
 	if (strcmp(type, "newRule") == 0) {
 		request_Type = NEW_RULE;
@@ -257,7 +257,7 @@ enum REQUEST_TYPE getRequestType(const char * type) {
 
 }
 
-void sendAllDevices() {
+static void sendAllDevices() {
 	int i = 0;
 	struct DEVICE* device;
 	json_object * rootMsg = json_object_new_object();
@@ -293,7 +293,7 @@ void sendAllDevices() {
 
 }
 
-void sendAllRules() {
+static void sendAllRules() {
 
 	json_object * rootMsg = json_object_new_object();
 
@@ -308,7 +308,7 @@ void sendAllRules() {
 
 }
 
-int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg) {
+static int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg) {
 	json_object * msg = json_object_new_object();
 	//type == type (rest)
 
@@ -351,7 +351,7 @@ int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg) {
 	return TRUE;
 }
 
-char * transformCharToString(char a) {
+static char * transformCharToString(char a) {
 	static char string[2];
 	sprintf(string, "%c", a);
 	return string;
@@ -393,12 +393,13 @@ void sendRemovedRule(const char * name) {
 	json_object_put(errorMsg);
 }
 
-void changeRulesPrioritiesRequest(json_object * requestJson){
+static void changeRulesPrioritiesRequest(json_object * requestJson){
 	json_object * rulesPriorityTable = json_object_object_get(requestJson, "rules");
 	changeRulesPriorities(rulesPriorityTable);
 	saveRules("RULES_STATUS.json");
 	
 }
+/*
 static void sendGetRules() {
 	json_object * getMsg = json_object_new_object();
 	json_object_object_add(getMsg, "msgType",
@@ -408,6 +409,7 @@ static void sendGetRules() {
 	sendLog(DEBUG, "get all rules request");
 	json_object_put(getMsg);
 }
+*/
 
 /*
  char * getNextJSONRequest() {
