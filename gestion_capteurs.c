@@ -48,16 +48,7 @@ int setValue(int id, int value){
 	}else{
 		return FALSE;
 	}
-	/*
-  SENSORS_SAFE();
-	if(id < nb_sensors && sensors[id].id != 0){
-		sensors[id].value = value;
-    SENSORS_UNSAFE();
-	}else{
-    SENSORS_UNSAFE();
-		return FALSE;
-	}
-	*/
+
 	return TRUE;
 }
 
@@ -72,6 +63,7 @@ void initMemory(){
 	memset(sensors,0,nb_sensors*sizeof(struct DEVICE));
 }
 
+//For test purposes only :
 void initTestMemory(){
   SENSORS_SAFE();
   memset(sensors,0,nb_sensors*sizeof(struct DEVICE));

@@ -1,5 +1,4 @@
 //Initializer/logger/destructor in the ghome server which still has no name.
-//Author(s) : Raphael C.
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -54,6 +53,7 @@ struct mlog {
 static mqd_t dispatchReq; //message queue to send messages to the outside world 
 static mqd_t msgLog;
 
+//Function called by every thread to ask for the main thread to log information
 int sendLog(enum logLvl level, char * format, ...) {
 	struct mlog msg = { .mtype = INFO, .mtext.errnb = 0, .mtext.level = level, };
 	va_list args;
@@ -68,6 +68,7 @@ int sendLog(enum logLvl level, char * format, ...) {
 	return 0;
 }
 
+//Same thing with errors.
 int sendErr(enum logLvl level, char * info, int errnb) {
 	struct mlog msg =
 			{ .mtype = ERR, .mtext.errnb = errnb, .mtext.level = level, };
@@ -78,6 +79,8 @@ int sendErr(enum logLvl level, char * info, int errnb) {
 	}
 	return 0;
 }
+
+//Printf only if the verbose level is big enough :
 static int ckprintf(int level, char * format, ...){
   int ret=0;
   va_list args;
@@ -88,6 +91,8 @@ static int ckprintf(int level, char * format, ...){
   }
   return ret; 
 }
+
+//Loging function allowing for formated, filtered loging :
 static int logMsg(enum logLvl level, char * msg) {
 
 	switch (level) {
@@ -112,6 +117,8 @@ static int logMsg(enum logLvl level, char * msg) {
   ckprintf(level,"%s\n", msg);
 	return 0;
 }
+
+//Same thing, but printing the error message associated with errnb :
 static int logErr(enum logLvl level, char * log, int err) {
 	char errBuff[ERR_SIZE];
 	char buff[MSG_SIZE];
@@ -120,6 +127,8 @@ static int logErr(enum logLvl level, char * log, int err) {
 	logMsg(level, buff);
 	return 0;
 }
+
+//sigint and sigterm handler :
 void handler(int sigNb) {
 	//We've been asked to terminate
   //int ret = 0;
@@ -158,6 +167,7 @@ void handler(int sigNb) {
   exit(0);
 }
 
+//Parse the command line arguments to set the verbosity level :
 static int parseArgs(int argc, char * argv[]){
   int i=1;
   int j=0;
@@ -199,7 +209,6 @@ int main(int argc, char * argv[]) {
 	int stop = 0;
 	size_t msgSize;
 	mode_t mqMode = S_IRWXO; //Allows everything for everyone
-	//TODO : change the mode to user.
 	struct mq_attr attrs = { 
     .mq_maxmsg = 90, //beyond 10 msgs one might need root acces
   };
@@ -292,8 +301,6 @@ int main(int argc, char * argv[]) {
 		logErr(ERROR, "pthread_create failes for inference engine thread",errno);
     handler(0);
 	}
-
-	//TODO : wait for both servers to have a client.
 
 	//Wait for messages to log :
 	received.mtype = INFO;

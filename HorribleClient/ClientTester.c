@@ -30,20 +30,21 @@
 int to_server_socket = -1;
 //0
 char * jsonExample333= "{ \"msgType\":\"checkRules\"}";
-char * jsonExample3 =
+char * jsonExample3= "{ \"msgType\":\"meteo\",\"codePostal\":\"69008\"}";
+char * jsonExample33 =
 		"{ \"msgType\":\"newRule\","
-				"\"priority\":\"1\","
+				"\"priority\":\"0\","
 				"\"rule\":{ \
-\"ruleName\":\"Rule 2\", \
+\"ruleName\":\"Rule 4\", \
 \"conditions\": [ \
 { \
 \"type\" : \"equ\", \
-\"leftOp\": \"@3\", \
+\"leftOp\": \"@5\", \
 \"rightOp\" : \"1\" \
 }],\n \
 \"actions\" : [ \
 { \
-\"actuator\" : \"10\", \
+\"actuator\" : \"4\", \
 \"value\" : \"1\"  \
 }\n \
 ] \

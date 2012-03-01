@@ -35,9 +35,7 @@ static int newRuleRequest(json_object * requestJson);
 static int addDeviceToMsg(struct DEVICE* device, json_object * rootMsg);
 static char * transformCharToString(char a);
 static void removeRuleRequest(json_object * requestJson);
-//static void sendGetRules();
 static void changeRulesPrioritiesRequest(json_object * requestJson);
-//char * getNextJSONRequest();
 static void sendAllRules();
 void meteoRequest(json_object * requestJson);
 
@@ -69,14 +67,10 @@ void * startRestRcv(void * args) {
 		}
 		sendLog(LOG, "restServer connected");
 		//Connection update
-    //sendGetRules(); //Ask for existing rules.
 
 		while (lengthSizeReceived != -1 && msgLengthReceived != -1) {
 
 			//Init rest Server Socket
-
-			//checkRules();//TO DELETE
-
 			//Get a JSON request
 			lengthSizeReceived = receive(socketRestClient, &msgLength,
 					sizeof(msgLength));
@@ -90,25 +84,17 @@ void * startRestRcv(void * args) {
 					// Treat the JSON request
 					if (JSONRequest != (char*) NULL
 							&& msgLengthReceived == msgLength) {
-						//sendLog(DEBUG, "Request : %s", JSONRequest);
 						int success = requestTreatment(JSONRequest);
-
 						if (success == TRUE) {
 							sendLog(DEBUG, "restServer request done");
 						} else {
 							sendLog(WARNING, "restServer request ignored");
 						}
-
 					}
 				}
 				gfree(JSONRequest);
 
 			}
-
-			//Destroy socket for sender
-			/* fermeture de la connection */
-			//shutdown(socketRestServer, 2);
-			//close(socketRestServer);
 		}
 		sendLog(LOG, "restServer disconected");
 
@@ -300,7 +286,6 @@ static void sendAllDevices() {
 
 	char * msg = (char *) json_object_to_json_string(rootMsg);
 	sendNetMsg(REST, strlen(msg), msg);
-	//sendLog(DEBUG, "restServer devices sent : %s", msg);
 	json_object_put(rootMsg);
 
 }
@@ -429,114 +414,4 @@ static void sendGetRules() {
 	json_object_put(getMsg);
 }
 */
-
-/*
- char * getNextJSONRequest() {
- int bracket = 0;
-
- if (indiceStart >= msgReadLength) {
- msgReadLength = recv(socketRestClient, (char*) received, MAX_MSG_LENGTH,
- MSG_WAITFORONE); //
- //msgReadLength = recv(socketRestClient, (char*) received, 290,
- //				MSG_WAITALL);
- indiceStart = 0;
- indiceEnd = 0;
- sendLog(DEBUG, "restServer request length: %d", msgReadLength);
- }
-
- if (msgReadLength != -1) {
-
- //get the first {
- for (indiceStart = 0;
- received[indiceStart] != '{' && indiceStart < msgReadLength;
- indiceStart++) {
- }
-
- if (indiceStart < msgReadLength) {
- //Si on a {
- int done = FALSE;
- bracket++;
-
- for (indiceEnd = indiceStart + 1;
- done == FALSE && indiceEnd < msgReadLength; indiceEnd++) {
- if (received[indiceEnd] == '{') {
- bracket++;
- } else if (received[indiceEnd] == '}') {
- bracket--;
- }
-
- if (bracket == 0) {
- done = TRUE;
- sendLog(DEBUG, "restServer request received");
- }
- }
-
- if (done == TRUE) {
- //Si une requete JSON a ete detectee
-
- char * newRequest = gmalloc(
- sizeof(char) * (indiceEnd - indiceStart + 1));
- memset(newRequest, '\0',
- sizeof(char) * (indiceEnd - indiceStart + 1));
- newRequest[indiceEnd - indiceStart] = '\0';
-
- //On copie la requete
- memcpy(newRequest, (char*) received + indiceStart,
- indiceEnd - indiceStart);
- indiceStart = indiceEnd;
-
- return newRequest;
- } else {
- sendLog(DEBUG, "restServer request cut");
- //Si il n'y a pas eu suffisamment de }
- msgReadLength = receive(socketRestClient, (char*) received,
- MAX_MSG_LENGTH);
- if (msgReadLength != -1) {
- indiceStart = 0;
- indiceEnd = 0;
- int done = FALSE;
-
- for (indiceEnd = indiceStart + 1;
- done == FALSE && indiceEnd < msgReadLength;
- indiceEnd++) {
-
- if (received[indiceEnd] == '{') {
- bracket++;
- } else if (received[indiceEnd] == '}') {
- bracket--;
- }
-
- if (bracket == 0) {
- done = TRUE;
- sendLog(DEBUG, "restServer request received2");
- }
- indiceEnd++;
- }
-
- //					if (done == TRUE) {
- //						//Si une requete JSON a ete detectee
- //						char * newRequest = gmalloc(
- //								sizeof(indiceEnd - indiceStart + 1));
- //						newRequest[indiceEnd - indiceStart] = '\0';
- //
- //						//On copie la requete
- //						strncpy(newRequest, (char*) indiceStart,
- //								indiceEnd - indiceStart);
- //						indiceStart = indiceEnd;
- //						return newRequest;
- //					} else {
- //						//Rest fais n'importe quoi
- //						sendLog(DEBUG, "restServer request explosion!!!");
- //						indiceStart = 0;
- //						indiceEnd = 0;
- //					}
-
- }
- }
-
- }
- }
- return (char*) FALSE;
- }
- */
 

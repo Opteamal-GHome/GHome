@@ -4,6 +4,7 @@
  *  Created on: 7 févr. 2012
  *      Author: mica
  */
+/*
 
 #ifndef RESTRCV_H_
 #define RESTRCV_H_
@@ -19,14 +20,7 @@
 #include "gestion_regles.h"
 
 #define MAX_MSG_LENGTH 500
-
-/*
- * Lance le traitement des echanges avec le client REST.
- */
-//void * startRestRcv(void * args);
-//void transmitUpdate(int id, int value);
-
-
-#endif /* RESTRCV_H_ */
+#endif 
+*/
 
 

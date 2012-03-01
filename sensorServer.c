@@ -1,5 +1,5 @@
 //Thread containing the tcp server used in the communication with the sensor manager
-//Author(s) : Rapahel C.
+//This server implement the ghome<->proxy protocol
 #include "mere.h"
 #include "tcpserver.h"
 #include "gestion_capteurs.h"
@@ -24,6 +24,7 @@ struct oData {
 	int data;
 };
 
+//Fill and Send an Order frame 
 int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata) {
 	char buff[20];
 	uint64_t timestamp;
@@ -42,25 +43,29 @@ int sendOFrame(unsigned long long int stimestamp, int ssensorId, int sdata) {
 	return 0;
 }
 
+//This frame is used to send a zip code to monitor for weather activity
 int sendVFrame(unsigned long long int stimestamp, int codePostal) {
 	int i;
-	char buff[15];
+	char buff[20];
 	uint64_t timestamp;
 	int data;
+  int null=0;
 	sendLog(DEBUG, "Sending V Frame");
 	timestamp = htobe64(stimestamp);
 	data = htobe32(codePostal);
 	memcpy(buff, &timestamp, sizeof(long long));
 	buff[sizeof(long long)] = 'V';
 	memcpy(buff + sizeof(long long) + 1, &data, sizeof(int));
-	buff[13] = '\n';
-	sendNetMsg(SENSORS, 14, buff);
-	for (i = 0; i < 14; i++) {
-		sendLog(DEBUG, "%hhx ", buff[i]);
+	memcpy(buff + sizeof(long long) + 1 +sizeof(int), &null, sizeof(int));
+	buff[17] = '\n';
+	sendNetMsg(SENSORS, 18, buff);
+	for (i = 0; i < 18; i++) {
+		sendLog(DEBUG, "%.2hhx ", buff[i]);
 	}
 	return 0;
 }
 
+//Get informations about devs addition or deletion
 static void getSData(unsigned long long timestamp){
   //This frames are used to create or remove sensors, let's do that :
   struct sData received;
@@ -85,6 +90,7 @@ static void getSData(unsigned long long timestamp){
       //update values in case it does :
       new_dev->type=received.sensorType;
       new_dev->timestamp=timestamp;
+      return;
     }
   //look for a vacation in sensors table : 
 
@@ -111,6 +117,8 @@ static void getSData(unsigned long long timestamp){
   }
 } 
 
+//Order and Data frames are the same, we actually only get D frames.
+//So this should actually rather be called getDData.
 static void getOData() {
 	struct oData received;
 	receive(socketSensorClient, (void *) &received, 8);
@@ -147,7 +155,6 @@ void * startSensorServer(void * args) {
 			return NULL;
 		}
 		sendLog(LOG, "Sensors client connected");
-		//sendOFrame(4142,6666,1337);
 		for (ret = 0; ret != -1;) {
 			//Each frame is cut in 3 pieces, timestamp, type and data
 			//The first two pieces have a fixed size of 9 bytes, let's get those.

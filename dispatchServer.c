@@ -1,3 +1,4 @@
+//This thread is used to send messages to all other servers/clients
 #include "mere.h"
 #include "tcpserver.h"
 #include <unistd.h>
@@ -15,7 +16,7 @@ int sendNetMsg(int destination, int len, char * msg){
     .msgSize=len,
   };
   if (dispatchReq==0) {
-    sendLog(DEBUG,"dispatch mq not opened yet"); //I don't think this is actually possible.
+    sendLog(DEBUG,"dispatch mq not opened yet");
     return -1;
   }
   //Allocate enough memory to copy the msg,

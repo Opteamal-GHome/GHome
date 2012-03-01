@@ -17,78 +17,15 @@
 #define forward_address "127.0.0.1"
 #define forward_port 1337
 
-
-int clientIni(FILE * output)
-{
-	/*
-	struct ifaddrs * iflist;
-	char loopback[]="127.0.0.1"; 
-	char address[16];
-	struct sockaddr_in* addr;
-	*/
-	int opt = 1;
-	struct sockaddr_in server_address;
-	int socketd;
-	uint16_t port = htons(forward_port);
-	fprintf(output,"Creating client\nInitializing...");
-	/*
-	ifaddrs * interface;
-
-	if (getifaddrs(&iflist) == -1) {
-		fprintf(output,"Failed to get iflist\n");
-	}
-	fprintf(output,"Available interfaces :")
-	for (interface = iflist; interface != NULL; interface = interface->ifa_next){
-		if (interface->ifa_addr == NULL || interface->ifa_addr->sa_family != AF_INET) {
-			continue;
-		}
-		addr = (sockaddr_in*)interface->ifa_addr;
-	   	inet_ntop(AF_INET, &addr->sin_addr,address,ADDR_SIZE);
-		fprintf(output,"\t %s : s\n",interface->ifa_name,address);
-		if (strcmp(address,loopback)==0){
-			//this is a good address, stop looking any further
-			fprintf("Found %s\n",ad);
-			break;
-		}
-		
-	}
-	gfreeifaddrs(iflist);
-	*/
-	//We probably don't need that
-	socketd = socket(AF_INET, SOCK_STREAM, 0);
-	if(socketd == -1) {
-		sendErr(ERROR,"socket ",errno); //fail to create new socket
-		return -1;
-	}
-	if (setsockopt(socketd,SOL_SOCKET,SO_REUSEADDR,&opt,4)) {
-		sendErr(WARNING,"setsockopt ",errno);
-		return -1;
-	}
-	
-	memset(&server_address,0,sizeof(struct sockaddr_in)); //clear struct
-	server_address.sin_family = AF_INET; //ipv4
-
-	if (inet_pton(AF_INET,forward_address,&server_address.sin_addr) == -1) {
-		sendErr(WARNING,"inet_pton ",errno);
-		return -1;
-	}
-	server_address.sin_port = port; 
-	if (connect(socketd,(const struct sockaddr *)&server_address,sizeof(server_address))) {
-		sendErr(ERROR,"connect ",errno);
-		return -1;
-	}
-	printf("Client Initialized\n");
-	return socketd;
-
-}
-
+//Connect to the rest server.
 int startUpdateSender(struct sockaddr_in client_address) {
 
 	struct sockaddr_in server_address;
 
   memset(&server_address,0,sizeof(struct sockaddr_in)); //clear struct
 	server_address.sin_family = AF_INET; //ipv4
-	if (inet_pton(AF_INET, inet_ntoa(client_address.sin_addr),\
+  //Do not use the client_address when tunneling, hardcode the local address here instead !
+	if (inet_pton(AF_INET, inet_ntoa(client_address.sin_addr)/*127.0.0.1*/,\
 		&server_address.sin_addr) == -1) {
 		sendErr(WARNING,"inet_pton ",errno);
 		return -1;
@@ -113,6 +50,7 @@ int startUpdateSender(struct sockaddr_in client_address) {
 	return 0;
 }
 
+//Init a server on a local socket :
 int initServer(listen_port){
 
 	int listen_socketd;
@@ -151,6 +89,7 @@ int initServer(listen_port){
   return listen_socketd;
 }
 
+//Wait for someone to connect on a socket created with initServer()
 int waitClient(int listenSocket, struct sockaddr_in * client){
 
 	int request_socketd;
@@ -181,6 +120,8 @@ void closeClient(int clientSock){
   shutdown(clientSock, SHUT_RDWR);
 	close(clientSock);
 }
+
+//receive exactly the requested number of bytes.
 int receive(int socket, char * buff, int size){
   size_t ret = 0;
   size_t bytesRcv = 0;
@@ -188,10 +129,10 @@ int receive(int socket, char * buff, int size){
   for (bytesRcv=0; bytesRcv<size; ){
     ret=grecv(socket,(void*)(buff+bytesRcv),size-ret,0);
     bytesRcv+=ret;
-    if (ret==0){
+    if (ret==0){ //Normal deco
       closeClient(socket);
       return -1;
-    }else if(ret==-1){
+    }else if(ret==-1){ //Abnormal deco
       sendErr(DEBUG,"recv on socket failed",errno);
       return -1;
     }else{
@@ -206,6 +147,7 @@ int receive(int socket, char * buff, int size){
   return ret;
 }
 
+//transmit, useless wrapper to keep a coherence with the tcp-api
 int transmit(int socket, char * buff, int size){
   if (gsend(socket, buff, size,0)==-1)
   {
