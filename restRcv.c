@@ -143,6 +143,7 @@ static int requestTreatment(char *requestRule) {
 			case GET_ALL_RULES:
 				sendLog(DEBUG, "restServer Get All Rules Request");
 				sendAllRules();
+				json_object_put(requestJson);
 				return TRUE;
 				break;
 
@@ -164,17 +165,20 @@ static int requestTreatment(char *requestRule) {
 			case RESET_RULES:
 				sendLog(DEBUG, "restServer Reset Rules Request");
 				resetMainRules();
+				json_object_put(requestJson);
 				return TRUE;
 				break;
 			case CHANGE_RULES_PRIORITIES:
 				sendLog(DEBUG, "restServer Change Rules Priorities Request");
 				changeRulesPrioritiesRequest(requestJson);
 				gsem_give(&sem);
+				json_object_put(requestJson);
 				return TRUE;
 				break;
 			case METEO:
 				sendLog(DEBUG, "restServer meteo Request");
 				meteoRequest(requestJson);
+				json_object_put(requestJson);
 				return TRUE;
 				break;
 			default:
@@ -412,7 +416,7 @@ void meteoRequest(json_object *requestJson){
 	
 	char * codePostal = (char *) json_object_get_string(
 	json_object_object_get(requestJson, "codePostal"));
-	//sendVFrame(42, atoi(codePostal));
+	sendVFrame(42, atoi(codePostal));
 }
 /*
 static void sendGetRules() {
