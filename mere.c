@@ -201,7 +201,7 @@ int main(int argc, char * argv[]) {
 	mode_t mqMode = S_IRWXO; //Allows everything for everyone
 	//TODO : change the mode to user.
 	struct mq_attr attrs = { 
-    .mq_maxmsg = 50, //beyond 10 msgs one might need root acces
+    .mq_maxmsg = 90, //beyond 10 msgs one might need root acces
   };
 	//threads control :
 
